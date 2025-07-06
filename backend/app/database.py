@@ -1,7 +1,9 @@
+from importlib import import_module
+from pathlib import Path
+
 from sqlmodel import Session, create_engine, select
 
 from app.config import settings
-from app.items.models import Item  # type: ignore # noqa: F401
 from app.users import service
 from app.users.models import User
 from app.users.schemas import UserCreate
@@ -34,3 +36,18 @@ def init_db(session: Session) -> None:
             is_superuser=True,
         )
         user = service.create_user(session=session, user_create=user_in)
+
+
+def load_models() -> None:
+    """Load all of the models."""
+    # Automatically load all of the routers from app/*/router.py
+    app_folder = Path(__file__).parent
+
+    for model_files in app_folder.glob("*/models.py"):
+        module_name = model_files.parent.name
+        import_module(f"app.{module_name}.models")
+
+    # # Alternative method to manually load all of the routers
+    # Example of how to import models manually
+    # from app.users.models import User
+    # from app.items.models import Item
