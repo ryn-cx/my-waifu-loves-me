@@ -5,12 +5,13 @@ from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import HTMLResponse
 from fastapi.security import OAuth2PasswordRequestForm
 
-from app import crud
-from app.api.deps import CurrentUser, SessionDep, get_current_active_superuser
 from app.config import settings
 from app.core import security
 from app.core.security import get_password_hash
+from app.deps import CurrentUser, SessionDep, get_current_active_superuser
+from app.login import service as login_service
 from app.schemas import Message, NewPassword, Token
+from app.users import service as user_service
 from app.users.schemas import UserPublic
 from app.utilities import (
     generate_password_reset_token,
@@ -29,7 +30,7 @@ def login_access_token(
     """
     OAuth2 compatible token login, get an access token for future requests
     """
-    user = crud.authenticate(
+    user = login_service.authenticate(
         session=session, email=form_data.username, password=form_data.password
     )
     if not user:
@@ -57,7 +58,7 @@ def recover_password(email: str, session: SessionDep) -> Message:
     """
     Password Recovery
     """
-    user = crud.get_user_by_email(session=session, email=email)
+    user = user_service.get_user_by_email(session=session, email=email)
 
     if not user:
         raise HTTPException(
@@ -84,7 +85,7 @@ def reset_password(session: SessionDep, body: NewPassword) -> Message:
     email = verify_password_reset_token(token=body.token)
     if not email:
         raise HTTPException(status_code=400, detail="Invalid token")
-    user = crud.get_user_by_email(session=session, email=email)
+    user = user_service.get_user_by_email(session=session, email=email)
     if not user:
         raise HTTPException(
             status_code=404,
@@ -108,7 +109,7 @@ def recover_password_html_content(email: str, session: SessionDep) -> Any:
     """
     HTML Content for Password Recovery
     """
-    user = crud.get_user_by_email(session=session, email=email)
+    user = user_service.get_user_by_email(session=session, email=email)
 
     if not user:
         raise HTTPException(
