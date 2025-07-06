@@ -2,7 +2,9 @@ from sqlmodel import Session, create_engine, select
 
 from app import crud
 from app.core.config import settings
-from app.models import User, UserCreate
+from app.items.models import Item  # type: ignore # noqa: F401
+from app.users.models import User
+from app.users.schemas import UserCreate
 
 engine = create_engine(str(settings.SQLALCHEMY_DATABASE_URI))
 
@@ -18,7 +20,8 @@ def init_db(session: Session) -> None:
     # the tables un-commenting the next lines
     # from sqlmodel import SQLModel
 
-    # This works because the models are already imported and registered from app.models
+    # This works because the models are manually imported and registered from
+    # app.items.models and app.users.models
     # SQLModel.metadata.create_all(engine)
 
     user = session.exec(
