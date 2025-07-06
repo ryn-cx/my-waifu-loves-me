@@ -1,7 +1,7 @@
 from sqlmodel import Session, create_engine, select
 
 from app import crud
-from app.core.config import settings
+from app.config import settings
 from app.items.models import Item  # type: ignore # noqa: F401
 from app.users.models import User
 from app.users.schemas import UserCreate

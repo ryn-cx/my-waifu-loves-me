@@ -3,7 +3,7 @@ from unittest.mock import patch
 from fastapi.testclient import TestClient
 from sqlmodel import Session
 
-from app.core.config import settings
+from app.config import settings
 from app.core.security import verify_password
 from app.crud import create_user
 from app.tests.utils.user import user_authentication_headers
@@ -49,8 +49,8 @@ def test_recovery_password(
     client: TestClient, normal_user_token_headers: dict[str, str]
 ) -> None:
     with (
-        patch("app.core.config.settings.SMTP_HOST", "smtp.example.com"),
-        patch("app.core.config.settings.SMTP_USER", "admin@example.com"),
+        patch("app.config.settings.SMTP_HOST", "smtp.example.com"),
+        patch("app.config.settings.SMTP_USER", "admin@example.com"),
     ):
         email = "test@example.com"
         r = client.post(

@@ -6,7 +6,7 @@ from sqlmodel import col, delete, func, select
 
 from app import crud
 from app.api.deps import CurrentUser, SessionDep, get_current_active_superuser
-from app.core.config import settings
+from app.config import settings
 from app.core.security import get_password_hash, verify_password
 from app.items.models import Item
 from app.schemas import Message

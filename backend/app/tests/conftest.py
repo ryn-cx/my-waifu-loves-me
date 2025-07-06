@@ -4,7 +4,7 @@ import pytest
 from fastapi.testclient import TestClient
 from sqlmodel import Session, delete
 
-from app.core.config import settings
+from app.config import settings
 from app.database import engine, init_db
 from app.items.models import Item
 from app.main import app

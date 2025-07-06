@@ -5,7 +5,7 @@ from fastapi.testclient import TestClient
 from sqlmodel import Session, select
 
 from app import crud
-from app.core.config import settings
+from app.config import settings
 from app.core.security import verify_password
 from app.tests.utils.utils import random_email, random_lower_string
 from app.users.models import User
@@ -39,8 +39,8 @@ def test_create_user_new_email(
 ) -> None:
     with (
         patch("app.utilities.send_email", return_value=None),
-        patch("app.core.config.settings.SMTP_HOST", "smtp.example.com"),
-        patch("app.core.config.settings.SMTP_USER", "admin@example.com"),
+        patch("app.config.settings.SMTP_HOST", "smtp.example.com"),
+        patch("app.config.settings.SMTP_USER", "admin@example.com"),
     ):
         username = random_email()
         password = random_lower_string()

@@ -3,7 +3,7 @@ from pathlib import Path
 
 from fastapi import APIRouter
 
-from app.core.config import settings
+from app.config import settings
 
 api_router = APIRouter()
 
@@ -20,7 +20,7 @@ for model_files in app_folder.glob("*/router.py"):
         api_router.include_router(router)
 
 # # Alternative method to manually load all of the routers from
-# from app.core.config import settings
+# from app.config import settings
 # from app.items.router import router as items_router
 # from app.login.router import router as login_router
 # from app.private.router import router as private_router

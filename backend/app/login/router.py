@@ -7,8 +7,8 @@ from fastapi.security import OAuth2PasswordRequestForm
 
 from app import crud
 from app.api.deps import CurrentUser, SessionDep, get_current_active_superuser
+from app.config import settings
 from app.core import security
-from app.core.config import settings
 from app.core.security import get_password_hash
 from app.schemas import Message, NewPassword, Token
 from app.users.schemas import UserPublic
