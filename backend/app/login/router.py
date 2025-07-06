@@ -5,9 +5,8 @@ from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import HTMLResponse
 from fastapi.security import OAuth2PasswordRequestForm
 
+from app import security
 from app.config import settings
-from app.core import security
-from app.core.security import get_password_hash
 from app.deps import CurrentUser, SessionDep, get_current_active_superuser
 from app.login import service as login_service
 from app.schemas import Message, NewPassword, Token
@@ -93,7 +92,7 @@ def reset_password(session: SessionDep, body: NewPassword) -> Message:
         )
     elif not user.is_active:
         raise HTTPException(status_code=400, detail="Inactive user")
-    hashed_password = get_password_hash(password=body.new_password)
+    hashed_password = security.get_password_hash(password=body.new_password)
     user.hashed_password = hashed_password
     session.add(user)
     session.commit()

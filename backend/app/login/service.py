@@ -1,6 +1,6 @@
 from sqlmodel import Session
 
-from app.core.security import verify_password
+from app.security import verify_password
 from app.users.models import User
 from app.users.service import get_user_by_email
 

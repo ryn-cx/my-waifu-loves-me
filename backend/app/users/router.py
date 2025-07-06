@@ -4,8 +4,8 @@ from typing import Any
 from fastapi import APIRouter, Depends, HTTPException
 from sqlmodel import col, delete, func, select
 
+from app import security
 from app.config import settings
-from app.core.security import get_password_hash, verify_password
 from app.deps import CurrentUser, SessionDep, get_current_active_superuser
 from app.items.models import Item
 from app.schemas import Message
@@ -100,13 +100,15 @@ def update_password_me(
     """
     Update own password.
     """
-    if not verify_password(body.current_password, current_user.hashed_password):
+    if not security.verify_password(
+        body.current_password, current_user.hashed_password
+    ):
         raise HTTPException(status_code=400, detail="Incorrect password")
     if body.current_password == body.new_password:
         raise HTTPException(
             status_code=400, detail="New password cannot be the same as the current one"
         )
-    hashed_password = get_password_hash(body.new_password)
+    hashed_password = security.get_password_hash(body.new_password)
     current_user.hashed_password = hashed_password
     session.add(current_user)
     session.commit()

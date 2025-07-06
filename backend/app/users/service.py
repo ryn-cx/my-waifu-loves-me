@@ -2,7 +2,7 @@ from typing import Any
 
 from sqlmodel import Session, select
 
-from app.core.security import get_password_hash
+from app.security import get_password_hash
 from app.users.models import User
 from app.users.schemas import UserCreate, UserUpdate
 
