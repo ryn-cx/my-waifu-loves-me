@@ -10,7 +10,7 @@ from sqlmodel import Session
 
 from app.core import security
 from app.core.config import settings
-from app.core.db import engine
+from app.database import engine
 from app.schemas import TokenPayload
 from app.users.models import User
 
