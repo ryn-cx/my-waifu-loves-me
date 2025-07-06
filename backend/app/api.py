@@ -19,7 +19,7 @@ for model_files in app_folder.glob("*/router.py"):
     else:
         api_router.include_router(router)
 
-# # Alternative method to manually load all of the routers from
+# # Alternative method to manually load all of the routers
 # from app.config import settings
 # from app.items.router import router as items_router
 # from app.login.router import router as login_router
