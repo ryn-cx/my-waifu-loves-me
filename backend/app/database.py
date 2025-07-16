@@ -43,8 +43,8 @@ def load_models() -> None:
     # Automatically load all of the routers from app/*/router.py
     app_folder = Path(__file__).parent
 
-    for model_files in app_folder.glob("*/models.py"):
-        module_name = model_files.parent.name
+    for model_file in app_folder.glob("*/models.py"):
+        module_name = model_file.parent.name
         import_module(f"app.{module_name}.models")
 
     # # Alternative method to manually load all of the routers
