@@ -7,10 +7,11 @@ from fastapi.security import OAuth2PasswordRequestForm
 
 from app import security
 from app.config import settings
-from app.deps import CurrentUser, SessionDep, get_current_active_superuser
+from app.deps import SessionDep
 from app.login import service as login_service
 from app.schemas import Message, NewPassword, Token
 from app.users import service as user_service
+from app.users.dependencies import CurrentUser, get_current_active_superuser
 from app.users.schemas import UserPublic
 from app.utilities import (
     generate_password_reset_token,

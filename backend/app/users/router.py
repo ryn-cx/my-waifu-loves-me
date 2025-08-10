@@ -6,10 +6,11 @@ from sqlmodel import col, delete, func, select
 
 from app import security
 from app.config import settings
-from app.deps import CurrentUser, SessionDep, get_current_active_superuser
+from app.deps import SessionDep
 from app.items.models import Item
 from app.schemas import Message
 from app.users import service
+from app.users.dependencies import CurrentUser, get_current_active_superuser
 from app.users.models import User
 from app.users.schemas import (
     UpdatePassword,
