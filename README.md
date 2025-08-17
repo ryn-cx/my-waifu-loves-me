@@ -4,17 +4,17 @@
 <a href="https://coverage-badge.samuelcolvin.workers.dev/redirect/ryn-cx/full-stack-fastapi-template" target="_blank"><img src="https://coverage-badge.samuelcolvin.workers.dev/ryn-cx/full-stack-fastapi-template.svg" alt="Coverage"></a>
 
 ## Goals of This Fork
-- Have the file structure more closely follow
+- 📁 Have the file structure more closely follow
   [zhanymkanov/fastapi-best-practices](https://github.com/zhanymkanov/fastapi-best-practices)
   and [Netflix/dispatch](https://github.com/Netflix/dispatch).
-- Support case insensitive email addresses.
+- 📧 Support case insensitive email addresses.
     - The original template intentionally did not support case insensitive email
       addresses because according to [RFC
       5321](https://www.rfc-editor.org/rfc/rfc5321#section-2.3.11) email addresses can
       be case sensitive. In practice, most websites ignore the standard to simplify the
       experience for the end user.
-- Automatically load database models and routers.
-- Run backend tests on a seperate database.
+- ⚡ Automatically load database models and routers.
+- 🧪 Run backend tests on a seperate database.
 ## Technology Stack and Features
 
 - ⚡ [**FastAPI**](https://fastapi.tiangolo.com) for the Python backend API.
