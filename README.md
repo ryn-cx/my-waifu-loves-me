@@ -14,6 +14,7 @@
       be case sensitive. In practice, most websites ignore the standard to simplify the
       experience for the end user.
 - Automatically load database models and routers.
+- Run backend tests on a seperate database.
 ## Technology Stack and Features
 
 - ⚡ [**FastAPI**](https://fastapi.tiangolo.com) for the Python backend API.
