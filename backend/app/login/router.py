@@ -7,7 +7,7 @@ from fastapi.security import OAuth2PasswordRequestForm
 
 from app import security
 from app.config import settings
-from app.deps import SessionDep
+from app.dependencies import SessionDep
 from app.login import service as login_service
 from app.schemas import Message, NewPassword, Token
 from app.users import service as user_service

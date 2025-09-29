@@ -6,7 +6,7 @@ from sqlmodel import col, delete, func, select
 
 from app import security
 from app.config import settings
-from app.deps import SessionDep
+from app.dependencies import SessionDep
 from app.items.models import Item
 from app.schemas import Message
 from app.users import service
