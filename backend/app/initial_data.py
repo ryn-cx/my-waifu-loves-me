@@ -2,11 +2,7 @@ import logging
 
 from sqlmodel import Session
 
-from app.database import engine, init_db, load_models
-
-# This file is run outside of the normal FastAPI environment, so the models need to be
-# manually loaded to avoid errors.
-load_models()
+from app.database import engine, init_db
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
