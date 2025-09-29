@@ -31,19 +31,19 @@ test_engine = create_engine(str(TEST_DATABASE_URI))
 def create_test_database() -> None:
     """Create the test database if it doesn't exist."""
     # Use the default database settings to create the test database
-    postgres_engine = create_engine(
-        str(settings.SQLALCHEMY_DATABASE_URI),
-        isolation_level="AUTOCOMMIT",
-    )
+    postgres_engine = create_engine(str(settings.SQLALCHEMY_DATABASE_URI))
     with Session(postgres_engine) as session:
         # Check if database exists
         result = session.execute(
             text("SELECT 1 FROM pg_database WHERE datname = :test_db_name"),
             {"test_db_name": TEST_POSTGRES_DB},
         )
-        # If the database does not exist create it
-        if not result.fetchone():
-            session.execute(text(f'CREATE DATABASE "{TEST_POSTGRES_DB}"'))
+
+        # If the database already exists delete it
+        if result.fetchone():
+            session.execute(text(f'DROP DATABASE "{TEST_POSTGRES_DB}"'))
+
+        session.execute(text(f'CREATE DATABASE "{TEST_POSTGRES_DB}"'))
 
     # Create the tables in the test database
     load_models()
