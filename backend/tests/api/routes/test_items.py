@@ -1,11 +1,11 @@
 import uuid
 
+from app.tests.utils.item import create_random_item
 from fastapi import status
 from fastapi.testclient import TestClient
 from sqlmodel import Session
 
 from app.config import settings
-from app.tests.utils.item import create_random_item
 
 
 def test_create_item(

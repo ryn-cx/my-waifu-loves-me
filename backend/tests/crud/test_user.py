@@ -1,9 +1,9 @@
+from app.tests.utils.utils import random_email, random_lower_string
 from fastapi.encoders import jsonable_encoder
 from sqlmodel import Session
 
 from app.login import service as login_service
 from app.security import verify_password
-from app.tests.utils.utils import random_email, random_lower_string
 from app.users import service as user_service
 from app.users.models import User
 from app.users.schemas import UserCreate, UserUpdate

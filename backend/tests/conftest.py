@@ -1,17 +1,17 @@
 from collections.abc import Generator
 
 import pytest
+from app.deps import get_db
+from app.tests.utils.user import authentication_token_from_email
+from app.tests.utils.utils import get_superuser_token_headers
 from fastapi.testclient import TestClient
 from pydantic_core import MultiHostUrl
 from sqlmodel import Session, SQLModel, create_engine, delete, text
 
 from app.config import settings
 from app.database import init_db, load_models
-from app.deps import get_db
 from app.items.models import Item
 from app.main import app
-from app.tests.utils.user import authentication_token_from_email
-from app.tests.utils.utils import get_superuser_token_headers
 from app.users.models import User
 
 TEST_POSTGRES_DB = settings.POSTGRES_DB + "_test"
