@@ -10,8 +10,8 @@ services:
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
     ports:
-      - "80:80"
-      - "8090:8080"
+      - "8180:80"
+      - "8190:8080"
     # Duplicate the command from docker-compose.yml to add --api.insecure=true
     command:
       # Enable Docker in Traefik, so that it reads labels from Docker services
@@ -48,17 +48,17 @@ services:
   db:
     restart: "no"
     ports:
-      - "5432:5432"
+      - "5532:5432"
 
   adminer:
     restart: "no"
     ports:
-      - "8080:8080"
+      - "8280:8080"
 
   backend:
     restart: "no"
     ports:
-      - "8000:8000"
+      - "8100:8000"
     build:
       context: ./backend
     # command: sleep infinity  # Infinite loop to keep container alive doing nothing
@@ -89,17 +89,17 @@ services:
   mailcatcher:
     image: schickling/mailcatcher
     ports:
-      - "1080:1080"
-      - "1025:1025"
+      - "1180:1080"
+      - "1125:1025"
 
   frontend:
     restart: "no"
     ports:
-      - "5173:80"
+      - "5273:80"
     build:
       context: ./frontend
       args:
-        - VITE_API_URL=http://localhost:8000
+        - VITE_API_URL=http://localhost:8100
         - NODE_ENV=development
 
   playwright:
@@ -107,7 +107,7 @@ services:
       context: ./frontend
       dockerfile: Dockerfile.playwright
       args:
-        - VITE_API_URL=http://backend:8000
+        - VITE_API_URL=http://backend:8100
         - NODE_ENV=production
     ipc: host
     depends_on:
@@ -116,7 +116,7 @@ services:
     env_file:
       - .env
     environment:
-      - VITE_API_URL=http://backend:8000
+      - VITE_API_URL=http://backend:8100
       - MAILCATCHER_HOST=http://mailcatcher:1080
       # For the reports when run locally
       - PLAYWRIGHT_HTML_HOST=0.0.0.0
@@ -125,7 +125,7 @@ services:
       - ./frontend/blob-report:/app/blob-report
       - ./frontend/test-results:/app/test-results
     ports:
-      - 9323:9323
+      - 9423:9323
 
 networks:
   traefik-public:
