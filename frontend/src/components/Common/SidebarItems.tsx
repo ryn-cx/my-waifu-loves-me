@@ -53,6 +53,7 @@ const SidebarItems = ({ onClose }: SidebarItemsProps) => {
   const statusFilter = new Set(statusFilterArray as MediaListStatus[])
   const usePopularityCompensation =
     searchParams?.usePopularityCompensation || false
+  const useLinearScaling = searchParams?.useLinearScaling || false
 
   const mediaMutation = useMutation({
     mutationFn: async (id: number) => {
@@ -376,6 +377,24 @@ const SidebarItems = ({ onClose }: SidebarItemsProps) => {
           >
             <Text fontSize="sm" fontWeight="medium">
               Popularity Compensation
+            </Text>
+          </Checkbox>
+
+          <Checkbox
+            checked={useLinearScaling}
+            onCheckedChange={(details) => {
+              navigate({
+                to: "/",
+                search: (prev: any) => ({
+                  ...prev,
+                  useLinearScaling: details.checked === true || undefined,
+                }),
+                replace: false,
+              })
+            }}
+          >
+            <Text fontSize="sm" fontWeight="medium">
+              Linear Node Scaling
             </Text>
           </Checkbox>
 

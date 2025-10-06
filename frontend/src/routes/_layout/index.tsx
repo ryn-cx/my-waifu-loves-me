@@ -41,6 +41,10 @@ export const Route = createFileRoute("/_layout/")({
         search.hideNotOnList === "true" ||
         search.hideNotOnList === true ||
         undefined,
+      useLinearScaling:
+        search.useLinearScaling === "true" ||
+        search.useLinearScaling === true ||
+        undefined,
     }
   },
 })
@@ -53,6 +57,7 @@ function MediaPage() {
     usePopularityCompensation = false,
     hideStatuses = [],
     hideNotOnList = false,
+    useLinearScaling = false,
   } = Route.useSearch()
   const [mediaItems, setMediaItems] = useState<Media[]>([])
   const [userList, setUserList] = useState<MediaListCollection | null>(null)
@@ -178,6 +183,7 @@ function MediaPage() {
             usePopularityCompensation={usePopularityCompensation}
             statusFilter={new Set(hideStatuses as MediaListStatus[])}
             hideNotOnList={hideNotOnList}
+            useLinearScaling={useLinearScaling}
           />
         </Box>
       ) : (

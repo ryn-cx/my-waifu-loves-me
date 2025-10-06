@@ -29,6 +29,7 @@ interface MediaGraphProps {
   usePopularityCompensation?: boolean
   statusFilter?: Set<MediaListStatus>
   hideNotOnList?: boolean
+  useLinearScaling?: boolean
 }
 
 const STATUS_COLORS: Record<MediaListStatus, string> = {
@@ -189,6 +190,7 @@ export function MediaGraph({
   usePopularityCompensation = false,
   statusFilter = new Set(),
   hideNotOnList = false,
+  useLinearScaling = false,
 }: MediaGraphProps) {
   const containerRef = useRef<HTMLDivElement>(null)
   const sigmaRef = useRef<Sigma | null>(null)
@@ -250,21 +252,48 @@ export function MediaGraph({
       recommendationRatings.length > 0 ? Math.max(...recommendationRatings) : 1
     const scaleFactor = 100 / maxRating
 
-    graph.forEachNode((node) => {
-      const nodeId = parseInt(node, 10)
-      const isUserChosen = loadedIds.has(nodeId)
+    if (useLinearScaling) {
+      const sortedNodes = Array.from(ratingSum.entries())
+        .filter(([nodeId]) => !loadedIds.has(parseInt(nodeId, 10)))
+        .sort(([, ratingA], [, ratingB]) => ratingB - ratingA)
 
-      if (isUserChosen) {
-        // User-chosen nodes should have fixed sizes and ratings because they exist just
-        // to contextualize the recommendations.
-        graph.setNodeAttribute(node, "size", 8)
-        graph.setNodeAttribute(node, "rating", 0)
-      } else {
-        const test = Math.round((ratingSum.get(node) || 0) * scaleFactor)
-        graph.setNodeAttribute(node, "size", Math.max(8, test / 2))
-        graph.setNodeAttribute(node, "rating", test)
-      }
-    })
+      const nodeCount = sortedNodes.length
+      const sizeRange = 50 - 8
+
+      graph.forEachNode((node) => {
+        const nodeId = parseInt(node, 10)
+        const isUserChosen = loadedIds.has(nodeId)
+
+        if (isUserChosen) {
+          // User-chosen nodes should have fixed sizes and ratings because they exist just
+          // to contextualize the recommendations.
+          graph.setNodeAttribute(node, "size", 8)
+          graph.setNodeAttribute(node, "rating", 0)
+        } else {
+          const nodeIndex = sortedNodes.findIndex(([id]) => id === node)
+          const size = 50 - (nodeIndex / (nodeCount - 1)) * sizeRange
+          graph.setNodeAttribute(node, "size", size)
+          const rating = Math.round((ratingSum.get(node) || 0) * scaleFactor)
+          graph.setNodeAttribute(node, "rating", rating)
+        }
+      })
+    } else {
+      graph.forEachNode((node) => {
+        const nodeId = parseInt(node, 10)
+        const isUserChosen = loadedIds.has(nodeId)
+
+        if (isUserChosen) {
+          // User-chosen nodes should have fixed sizes and ratings because they exist just
+          // to contextualize the recommendations.
+          graph.setNodeAttribute(node, "size", 8)
+          graph.setNodeAttribute(node, "rating", 0)
+        } else {
+          const test = Math.round((ratingSum.get(node) || 0) * scaleFactor)
+          graph.setNodeAttribute(node, "size", Math.max(8, test / 2))
+          graph.setNodeAttribute(node, "rating", test)
+        }
+      })
+    }
 
     forceAtlas2.assign(graph, {
       iterations: 128,
@@ -348,6 +377,7 @@ export function MediaGraph({
     loadedIds,
     hideNotOnList,
     mediaStatusMap,
+    useLinearScaling,
   ])
 
   const renderTooltip = (
