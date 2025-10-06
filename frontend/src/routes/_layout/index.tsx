@@ -3,7 +3,7 @@ import { useMutation } from "@tanstack/react-query"
 import { createFileRoute, useNavigate } from "@tanstack/react-router"
 import { useEffect, useState } from "react"
 import {
-  type Media,
+  type app__media__graphql_media_schema__Media,
   type MediaListCollection,
   type MediaListStatus,
   MediaService,
@@ -59,7 +59,9 @@ function MediaPage() {
     hideNotOnList = false,
     useLinearScaling = false,
   } = Route.useSearch()
-  const [mediaItems, setMediaItems] = useState<Media[]>([])
+  const [mediaItems, setMediaItems] = useState<
+    app__media__graphql_media_schema__Media[]
+  >([])
   const [userList, setUserList] = useState<MediaListCollection | null>(null)
   const [loadedIds, setLoadedIds] = useState<Set<number>>(
     () =>

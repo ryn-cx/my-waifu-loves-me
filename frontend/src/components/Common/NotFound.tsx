@@ -31,7 +31,17 @@ const NotFound = () => {
         The page you are looking for was not found.
       </Text>
       <Center zIndex={1}>
-        <Link to="/">
+        <Link
+          to="/"
+          search={{
+            ids: undefined,
+            user: undefined,
+            usePopularityCompensation: undefined,
+            hideStatuses: undefined,
+            hideNotOnList: undefined,
+            useLinearScaling: undefined,
+          }}
+        >
           <Button variant="solid" colorScheme="teal" mt={4} alignSelf="center">
             Go Back
           </Button>

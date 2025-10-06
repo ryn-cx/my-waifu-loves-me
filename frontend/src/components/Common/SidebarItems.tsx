@@ -48,7 +48,7 @@ const SidebarItems = ({ onClose }: SidebarItemsProps) => {
   const statusFilterArray = Array.isArray(hideStatuses)
     ? hideStatuses
     : typeof hideStatuses === "string"
-      ? hideStatuses.split(",").filter(Boolean)
+      ? (hideStatuses as string).split(",").filter(Boolean)
       : []
   const statusFilter = new Set(statusFilterArray as MediaListStatus[])
   const usePopularityCompensation =
@@ -186,7 +186,17 @@ const SidebarItems = ({ onClose }: SidebarItemsProps) => {
             variant="outline"
             colorScheme="red"
             onClick={() => {
-              navigate({ to: "/", search: {} })
+              navigate({
+                to: "/",
+                search: {
+                  ids: undefined,
+                  user: undefined,
+                  usePopularityCompensation: undefined,
+                  hideStatuses: undefined,
+                  hideNotOnList: undefined,
+                  useLinearScaling: undefined,
+                },
+              })
               onClose?.()
             }}
           >
@@ -334,7 +344,7 @@ const SidebarItems = ({ onClose }: SidebarItemsProps) => {
                           />
                         )}
                         <VStack align="start" flex={1} gap={0.5}>
-                          <Text fontWeight="bold" fontSize="xs" noOfLines={2}>
+                          <Text fontWeight="bold" fontSize="xs" lineClamp={2}>
                             {item.title?.romaji ||
                               item.title?.english ||
                               item.title?.native}{" "}

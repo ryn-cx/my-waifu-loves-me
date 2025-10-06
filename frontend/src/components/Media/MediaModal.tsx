@@ -9,7 +9,7 @@ import {
   Text,
   VStack,
 } from "@chakra-ui/react"
-import type { Media } from "@/client"
+import type { app__media__graphql_media_schema__Media } from "@/client"
 import {
   DialogBackdrop,
   DialogBody,
@@ -21,7 +21,7 @@ import {
 } from "@/components/ui/dialog"
 
 interface MediaModalProps {
-  media: Media | null
+  media: app__media__graphql_media_schema__Media | null
   open: boolean
   onClose: () => void
 }
@@ -93,7 +93,7 @@ export function MediaModal({ media, open, onClose }: MediaModalProps) {
                       Studio
                     </Text>
                     {media.studios.nodes.map(
-                      (studio, idx) =>
+                      (studio, idx: number) =>
                         studio && (
                           <Link
                             key={idx}
@@ -131,7 +131,7 @@ export function MediaModal({ media, open, onClose }: MediaModalProps) {
                     </Text>
                     <Flex wrap="wrap" gap={2}>
                       {media.genres.map(
-                        (genre, idx) =>
+                        (genre, idx: number) =>
                           genre && (
                             <Badge key={idx} colorScheme="purple">
                               {genre}
@@ -149,11 +149,11 @@ export function MediaModal({ media, open, onClose }: MediaModalProps) {
                     </Text>
                     <Grid templateColumns="repeat(2, 1fr)" gap={2}>
                       {media.externalLinks.slice(0, 6).map(
-                        (link, idx) =>
+                        (link, idx: number) =>
                           link && (
                             <Link
                               key={idx}
-                              href={link.url}
+                              href={link.url ?? undefined}
                               target="_blank"
                               color="blue.500"
                               fontSize="sm"
