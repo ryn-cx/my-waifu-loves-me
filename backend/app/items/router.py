@@ -4,7 +4,7 @@ from typing import Any
 from fastapi import APIRouter, HTTPException, status
 from sqlmodel import func, select
 
-from app.deps import SessionDep
+from app.dependencies import SessionDep
 from app.items.models import Item
 from app.items.schemas import ItemCreate, ItemPublic, ItemsPublic, ItemUpdate
 from app.schemas import Message

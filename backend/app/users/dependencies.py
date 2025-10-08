@@ -8,7 +8,7 @@ from pydantic import ValidationError
 
 from app import security
 from app.config import settings
-from app.deps import SessionDep
+from app.dependencies import SessionDep
 from app.schemas import TokenPayload
 from app.users.models import User
 

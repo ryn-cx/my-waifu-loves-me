@@ -6,11 +6,11 @@ from sqlmodel import Session
 
 from app.config import settings
 from app.security import verify_password
-from app.tests.utils.user import user_authentication_headers
-from app.tests.utils.utils import random_email, random_lower_string
 from app.users.schemas import UserCreate
 from app.users.service import create_user
 from app.utilities import generate_password_reset_token
+from tests.utils.user import user_authentication_headers
+from tests.utils.utils import random_email, random_lower_string
 
 
 def test_get_access_token(client: TestClient) -> None:

@@ -7,12 +7,12 @@ from sqlmodel import Session, SQLModel, create_engine, delete, text
 
 from app.config import settings
 from app.database import init_db, load_models
-from app.deps import get_db
+from app.dependencies import get_db
 from app.items.models import Item
 from app.main import app
-from app.tests.utils.user import authentication_token_from_email
-from app.tests.utils.utils import get_superuser_token_headers
 from app.users.models import User
+from tests.utils.user import authentication_token_from_email
+from tests.utils.utils import get_superuser_token_headers
 
 TEST_POSTGRES_DB = settings.POSTGRES_DB + "_test"
 
@@ -31,19 +31,23 @@ test_engine = create_engine(str(TEST_DATABASE_URI))
 def create_test_database() -> None:
     """Create the test database if it doesn't exist."""
     # Use the default database settings to create the test database
-    postgres_engine = create_engine(
-        str(settings.SQLALCHEMY_DATABASE_URI),
-        isolation_level="AUTOCOMMIT",
-    )
-    with Session(postgres_engine) as session:
+    postgres_engine = create_engine(str(settings.SQLALCHEMY_DATABASE_URI))
+
+    # Use raw connection with autocommit to avoid transaction block
+    with postgres_engine.connect().execution_options(
+        isolation_level="AUTOCOMMIT"
+    ) as conn:
         # Check if database exists
-        result = session.execute(
+        result = conn.execute(
             text("SELECT 1 FROM pg_database WHERE datname = :test_db_name"),
             {"test_db_name": TEST_POSTGRES_DB},
         )
-        # If the database does not exist create it
-        if not result.fetchone():
-            session.execute(text(f'CREATE DATABASE "{TEST_POSTGRES_DB}"'))
+
+        # If the database already exists delete it
+        if result.fetchone():
+            conn.execute(text(f'DROP DATABASE "{TEST_POSTGRES_DB}"'))
+
+        conn.execute(text(f'CREATE DATABASE "{TEST_POSTGRES_DB}"'))
 
     # Create the tables in the test database
     load_models()
