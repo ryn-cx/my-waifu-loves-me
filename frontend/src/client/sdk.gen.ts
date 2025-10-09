@@ -3,7 +3,7 @@
 import type { CancelablePromise } from './core/CancelablePromise';
 import { OpenAPI } from './core/OpenAPI';
 import { request as __request } from './core/request';
-import type { ItemsReadItemsData, ItemsReadItemsResponse, ItemsCreateItemData, ItemsCreateItemResponse, ItemsReadItemData, ItemsReadItemResponse, ItemsUpdateItemData, ItemsUpdateItemResponse, ItemsDeleteItemData, ItemsDeleteItemResponse, LoginLoginAccessTokenData, LoginLoginAccessTokenResponse, LoginTestTokenResponse, LoginRecoverPasswordData, LoginRecoverPasswordResponse, LoginResetPasswordData, LoginResetPasswordResponse, LoginRecoverPasswordHtmlContentData, LoginRecoverPasswordHtmlContentResponse, PrivateCreateUserData, PrivateCreateUserResponse, UsersReadUsersData, UsersReadUsersResponse, UsersCreateUserData, UsersCreateUserResponse, UsersReadUserMeResponse, UsersDeleteUserMeResponse, UsersUpdateUserMeData, UsersUpdateUserMeResponse, UsersUpdatePasswordMeData, UsersUpdatePasswordMeResponse, UsersRegisterUserData, UsersRegisterUserResponse, UsersReadUserByIdData, UsersReadUserByIdResponse, UsersUpdateUserData, UsersUpdateUserResponse, UsersDeleteUserData, UsersDeleteUserResponse, UtilsTestEmailData, UtilsTestEmailResponse, UtilsHealthCheckResponse } from './types.gen';
+import type { ItemsReadItemsData, ItemsReadItemsResponse, ItemsCreateItemData, ItemsCreateItemResponse, ItemsReadItemData, ItemsReadItemResponse, ItemsUpdateItemData, ItemsUpdateItemResponse, ItemsDeleteItemData, ItemsDeleteItemResponse, LoginLoginAccessTokenData, LoginLoginAccessTokenResponse, LoginTestTokenResponse, LoginRecoverPasswordData, LoginRecoverPasswordResponse, LoginResetPasswordData, LoginResetPasswordResponse, LoginRecoverPasswordHtmlContentData, LoginRecoverPasswordHtmlContentResponse, MediaReadMediaData, MediaReadMediaResponse, MediaReadUserData, MediaReadUserResponse, MediaSearchMediaData, MediaSearchMediaResponse, PrivateCreateUserData, PrivateCreateUserResponse, UsersReadUsersData, UsersReadUsersResponse, UsersCreateUserData, UsersCreateUserResponse, UsersReadUserMeResponse, UsersDeleteUserMeResponse, UsersUpdateUserMeData, UsersUpdateUserMeResponse, UsersUpdatePasswordMeData, UsersUpdatePasswordMeResponse, UsersRegisterUserData, UsersRegisterUserResponse, UsersReadUserByIdData, UsersReadUserByIdResponse, UsersUpdateUserData, UsersUpdateUserResponse, UsersDeleteUserData, UsersDeleteUserResponse, UtilsTestEmailData, UtilsTestEmailResponse, UtilsHealthCheckResponse } from './types.gen';
 
 export class ItemsService {
     /**
@@ -205,6 +205,76 @@ export class LoginService {
             url: '/api/v1/password-recovery-html-content/{email}',
             path: {
                 email: data.email
+            },
+            errors: {
+                422: 'Validation Error'
+            }
+        });
+    }
+}
+
+export class MediaService {
+    /**
+     * Read Media
+     * Retrieve media.
+     * @param data The data for the request.
+     * @param data.mediaId
+     * @returns app__media__graphql_media_schema__Media Successful Response
+     * @throws ApiError
+     */
+    public static readMedia(data: MediaReadMediaData): CancelablePromise<MediaReadMediaResponse> {
+        return __request(OpenAPI, {
+            method: 'GET',
+            url: '/api/v1/media/{media_id}',
+            path: {
+                media_id: data.mediaId
+            },
+            errors: {
+                422: 'Validation Error'
+            }
+        });
+    }
+    
+    /**
+     * Read User
+     * Retrieve media.
+     * @param data The data for the request.
+     * @param data.userName
+     * @returns MediaListCollection Successful Response
+     * @throws ApiError
+     */
+    public static readUser(data: MediaReadUserData): CancelablePromise<MediaReadUserResponse> {
+        return __request(OpenAPI, {
+            method: 'GET',
+            url: '/api/v1/media/user/{user_name}',
+            path: {
+                user_name: data.userName
+            },
+            errors: {
+                422: 'Validation Error'
+            }
+        });
+    }
+    
+    /**
+     * Search Media
+     * Search for media by title.
+     * media_type can be 'ANIME', 'MANGA', or None for both.
+     * @param data The data for the request.
+     * @param data.searchQuery
+     * @param data.mediaType
+     * @returns SearchPage Successful Response
+     * @throws ApiError
+     */
+    public static searchMedia(data: MediaSearchMediaData): CancelablePromise<MediaSearchMediaResponse> {
+        return __request(OpenAPI, {
+            method: 'GET',
+            url: '/api/v1/media/search/{search_query}',
+            path: {
+                search_query: data.searchQuery
+            },
+            query: {
+                media_type: data.mediaType
             },
             errors: {
                 422: 'Validation Error'

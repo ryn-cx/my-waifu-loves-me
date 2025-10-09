@@ -6,7 +6,7 @@ export const Body_login_login_access_tokenSchema = {
             anyOf: [
                 {
                     type: 'string',
-                    pattern: 'password'
+                    pattern: '^password$'
                 },
                 {
                     type: 'null'
@@ -20,6 +20,7 @@ export const Body_login_login_access_tokenSchema = {
         },
         password: {
             type: 'string',
+            format: 'password',
             title: 'Password'
         },
         scope: {
@@ -47,12 +48,77 @@ export const Body_login_login_access_tokenSchema = {
                     type: 'null'
                 }
             ],
+            format: 'password',
             title: 'Client Secret'
         }
     },
     type: 'object',
     required: ['username', 'password'],
     title: 'Body_login-login_access_token'
+} as const;
+
+export const ExternalLinkTypeSchema = {
+    type: 'string',
+    enum: ['INFO', 'SOCIAL', 'STREAMING'],
+    title: 'ExternalLinkType'
+} as const;
+
+export const FuzzyDateSchema = {
+    properties: {
+        day: {
+            anyOf: [
+                {
+                    type: 'integer'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Day',
+            description: 'Numeric Day (24)'
+        },
+        month: {
+            anyOf: [
+                {
+                    type: 'integer'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Month',
+            description: 'Numeric Month (3)'
+        },
+        year: {
+            anyOf: [
+                {
+                    type: 'integer'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Year',
+            description: 'Numeric Year (2017)'
+        },
+        __typename: {
+            anyOf: [
+                {
+                    type: 'string',
+                    const: 'FuzzyDate'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Typename',
+            default: 'FuzzyDate'
+        }
+    },
+    additionalProperties: false,
+    type: 'object',
+    title: 'FuzzyDate',
+    description: 'Date object that allows for incomplete date values (fuzzy)'
 } as const;
 
 export const HTTPValidationErrorSchema = {
@@ -182,6 +248,517 @@ export const ItemsPublicSchema = {
     title: 'ItemsPublic'
 } as const;
 
+export const MediaExternalLinkSchema = {
+    properties: {
+        color: {
+            anyOf: [
+                {
+                    type: 'string'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Color'
+        },
+        icon: {
+            anyOf: [
+                {
+                    type: 'string'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Icon',
+            description: 'The icon image url of the site. Not available for all links. Transparent PNG 64x64'
+        },
+        id: {
+            type: 'integer',
+            title: 'Id',
+            description: 'The id of the external link'
+        },
+        isDisabled: {
+            anyOf: [
+                {
+                    type: 'boolean'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Isdisabled'
+        },
+        language: {
+            anyOf: [
+                {
+                    type: 'string'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Language',
+            description: 'Language the site content is in. See Staff language field for values.'
+        },
+        notes: {
+            anyOf: [
+                {
+                    type: 'string'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Notes'
+        },
+        site: {
+            type: 'string',
+            title: 'Site',
+            description: 'The links website site name'
+        },
+        siteId: {
+            anyOf: [
+                {
+                    type: 'integer'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Siteid',
+            description: 'The links website site id'
+        },
+        type: {
+            anyOf: [
+                {
+                    '$ref': '#/components/schemas/ExternalLinkType'
+                },
+                {
+                    type: 'null'
+                }
+            ]
+        },
+        url: {
+            anyOf: [
+                {
+                    type: 'string'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Url',
+            description: 'The url of the external link or base url of link source'
+        },
+        __typename: {
+            anyOf: [
+                {
+                    type: 'string',
+                    const: 'MediaExternalLink'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Typename',
+            default: 'MediaExternalLink'
+        }
+    },
+    additionalProperties: false,
+    type: 'object',
+    required: ['id', 'site'],
+    title: 'MediaExternalLink',
+    description: 'An external link to another site related to the media or staff member'
+} as const;
+
+export const MediaFormatSchema = {
+    type: 'string',
+    enum: ['MANGA', 'MOVIE', 'MUSIC', 'NOVEL', 'ONA', 'ONE_SHOT', 'OVA', 'SPECIAL', 'TV', 'TV_SHORT'],
+    title: 'MediaFormat',
+    description: 'The format the media was released in'
+} as const;
+
+export const MediaListSchema = {
+    properties: {
+        mediaId: {
+            type: 'integer',
+            title: 'Mediaid',
+            description: 'The id of the media'
+        }
+    },
+    type: 'object',
+    required: ['mediaId'],
+    title: 'MediaList',
+    description: 'List of anime or manga.'
+} as const;
+
+export const MediaListCollectionSchema = {
+    properties: {
+        lists: {
+            anyOf: [
+                {
+                    items: {
+                        anyOf: [
+                            {
+                                '$ref': '#/components/schemas/MediaListGroup'
+                            },
+                            {
+                                type: 'null'
+                            }
+                        ]
+                    },
+                    type: 'array'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Lists',
+            description: 'Grouped media list entries'
+        }
+    },
+    type: 'object',
+    title: 'MediaListCollection',
+    description: 'List of anime or manga.'
+} as const;
+
+export const MediaListGroupSchema = {
+    properties: {
+        entries: {
+            anyOf: [
+                {
+                    items: {
+                        anyOf: [
+                            {
+                                '$ref': '#/components/schemas/MediaList'
+                            },
+                            {
+                                type: 'null'
+                            }
+                        ]
+                    },
+                    type: 'array'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Entries',
+            description: 'Media list entries'
+        },
+        status: {
+            anyOf: [
+                {
+                    '$ref': '#/components/schemas/MediaListStatus'
+                },
+                {
+                    type: 'null'
+                }
+            ]
+        }
+    },
+    type: 'object',
+    title: 'MediaListGroup',
+    description: 'List group of anime or manga entries.'
+} as const;
+
+export const MediaListStatusSchema = {
+    type: 'string',
+    enum: ['COMPLETED', 'CURRENT', 'DROPPED', 'PAUSED', 'PLANNING', 'REPEATING'],
+    title: 'MediaListStatus',
+    description: 'Media list watching/reading status enum.'
+} as const;
+
+export const MediaRankSchema = {
+    properties: {
+        allTime: {
+            anyOf: [
+                {
+                    type: 'boolean'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Alltime',
+            description: 'If the ranking is based on all time instead of a season/year'
+        },
+        context: {
+            type: 'string',
+            title: 'Context',
+            description: 'String that gives context to the ranking type and time span'
+        },
+        format: {
+            '$ref': '#/components/schemas/MediaFormat',
+            description: 'The format the media is ranked within'
+        },
+        id: {
+            type: 'integer',
+            title: 'Id',
+            description: 'The id of the rank'
+        },
+        rank: {
+            type: 'integer',
+            title: 'Rank',
+            description: 'The numerical rank of the media'
+        },
+        season: {
+            anyOf: [
+                {
+                    '$ref': '#/components/schemas/MediaSeason'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            description: 'The season the media is ranked within'
+        },
+        type: {
+            '$ref': '#/components/schemas/MediaRankType'
+        },
+        year: {
+            anyOf: [
+                {
+                    type: 'integer'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Year',
+            description: 'The year the media is ranked within'
+        },
+        __typename: {
+            anyOf: [
+                {
+                    type: 'string',
+                    const: 'MediaRank'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Typename',
+            default: 'MediaRank'
+        }
+    },
+    additionalProperties: false,
+    type: 'object',
+    required: ['context', 'format', 'id', 'rank', 'type'],
+    title: 'MediaRank',
+    description: 'The ranking of a media in a particular time span and format compared to other media'
+} as const;
+
+export const MediaRankTypeSchema = {
+    type: 'string',
+    enum: ['POPULAR', 'RATED'],
+    title: 'MediaRankType',
+    description: 'The type of ranking'
+} as const;
+
+export const MediaSeasonSchema = {
+    type: 'string',
+    enum: ['FALL', 'SPRING', 'SUMMER', 'WINTER'],
+    title: 'MediaSeason'
+} as const;
+
+export const MediaSourceSchema = {
+    type: 'string',
+    enum: ['ANIME', 'COMIC', 'DOUJINSHI', 'GAME', 'LIGHT_NOVEL', 'LIVE_ACTION', 'MANGA', 'MULTIMEDIA_PROJECT', 'NOVEL', 'ORIGINAL', 'OTHER', 'PICTURE_BOOK', 'VIDEO_GAME', 'VISUAL_NOVEL', 'WEB_NOVEL'],
+    title: 'MediaSource',
+    description: 'Source type the media was adapted from'
+} as const;
+
+export const MediaStatusSchema = {
+    type: 'string',
+    enum: ['CANCELLED', 'FINISHED', 'HIATUS', 'NOT_YET_RELEASED', 'RELEASING'],
+    title: 'MediaStatus',
+    description: 'The current releasing status of the media'
+} as const;
+
+export const MediaTagSchema = {
+    properties: {
+        category: {
+            anyOf: [
+                {
+                    type: 'string'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Category',
+            description: 'The categories of tags this tag belongs to'
+        },
+        description: {
+            anyOf: [
+                {
+                    type: 'string'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Description',
+            description: 'A general description of the tag'
+        },
+        id: {
+            type: 'integer',
+            title: 'Id',
+            description: 'The id of the tag'
+        },
+        isAdult: {
+            anyOf: [
+                {
+                    type: 'boolean'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Isadult',
+            description: 'If the tag is only for adult 18+ media'
+        },
+        isGeneralSpoiler: {
+            anyOf: [
+                {
+                    type: 'boolean'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Isgeneralspoiler',
+            description: 'If the tag could be a spoiler for any media'
+        },
+        isMediaSpoiler: {
+            anyOf: [
+                {
+                    type: 'boolean'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Ismediaspoiler',
+            description: 'If the tag is a spoiler for this media'
+        },
+        name: {
+            type: 'string',
+            title: 'Name',
+            description: 'The name of the tag'
+        },
+        rank: {
+            anyOf: [
+                {
+                    type: 'integer'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Rank',
+            description: 'The relevance ranking of the tag out of the 100 for this media'
+        },
+        userId: {
+            anyOf: [
+                {
+                    type: 'integer'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Userid',
+            description: 'The user who submitted the tag'
+        },
+        __typename: {
+            anyOf: [
+                {
+                    type: 'string',
+                    const: 'MediaTag'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Typename',
+            default: 'MediaTag'
+        }
+    },
+    additionalProperties: false,
+    type: 'object',
+    required: ['id', 'name'],
+    title: 'MediaTag',
+    description: 'A tag that describes a theme or element of the media'
+} as const;
+
+export const MediaTrailerSchema = {
+    properties: {
+        id: {
+            anyOf: [
+                {
+                    type: 'string'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Id',
+            description: 'The trailer video id'
+        },
+        site: {
+            anyOf: [
+                {
+                    type: 'string'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Site',
+            description: 'The site the video is hosted by (Currently either youtube or dailymotion)'
+        },
+        thumbnail: {
+            anyOf: [
+                {
+                    type: 'string'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Thumbnail',
+            description: 'The url for the thumbnail image of the video'
+        },
+        __typename: {
+            anyOf: [
+                {
+                    type: 'string',
+                    const: 'MediaTrailer'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Typename',
+            default: 'MediaTrailer'
+        }
+    },
+    additionalProperties: false,
+    type: 'object',
+    title: 'MediaTrailer',
+    description: 'Media trailer or advertisement'
+} as const;
+
+export const MediaTypeSchema = {
+    type: 'string',
+    enum: ['ANIME', 'MANGA'],
+    title: 'MediaType',
+    description: 'Media type enum, anime or manga.'
+} as const;
+
 export const MessageSchema = {
     properties: {
         message: {
@@ -212,6 +789,87 @@ export const NewPasswordSchema = {
     title: 'NewPassword'
 } as const;
 
+export const PageInfoSchema = {
+    properties: {
+        currentPage: {
+            anyOf: [
+                {
+                    type: 'integer'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Currentpage',
+            description: 'The current page'
+        },
+        hasNextPage: {
+            anyOf: [
+                {
+                    type: 'boolean'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Hasnextpage',
+            description: 'If there is another page'
+        },
+        lastPage: {
+            anyOf: [
+                {
+                    type: 'integer'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Lastpage',
+            description: 'The last page'
+        },
+        perPage: {
+            anyOf: [
+                {
+                    type: 'integer'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Perpage',
+            description: 'The count on a page'
+        },
+        total: {
+            anyOf: [
+                {
+                    type: 'integer'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Total',
+            description: 'The total number of items. Note: This value is not guaranteed to be accurate, do not rely on this for logic'
+        },
+        __typename: {
+            anyOf: [
+                {
+                    type: 'string',
+                    const: 'PageInfo'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Typename',
+            default: 'PageInfo'
+        }
+    },
+    additionalProperties: false,
+    type: 'object',
+    title: 'PageInfo'
+} as const;
+
 export const PrivateUserCreateSchema = {
     properties: {
         email: {
@@ -235,6 +893,377 @@ export const PrivateUserCreateSchema = {
     type: 'object',
     required: ['email', 'password', 'full_name'],
     title: 'PrivateUserCreate'
+} as const;
+
+export const RecommendationSchema = {
+    properties: {
+        id: {
+            type: 'integer',
+            title: 'Id',
+            description: 'The id of the recommendation'
+        },
+        mediaRecommendation: {
+            anyOf: [
+                {
+                    '$ref': '#/components/schemas/app__media__graphql_media_schema__Media'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            description: 'The recommended media'
+        },
+        rating: {
+            anyOf: [
+                {
+                    type: 'integer'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Rating',
+            description: 'Users rating of the recommendation'
+        },
+        __typename: {
+            anyOf: [
+                {
+                    type: 'string',
+                    const: 'Recommendation'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Typename',
+            default: 'Recommendation'
+        }
+    },
+    additionalProperties: false,
+    type: 'object',
+    required: ['id'],
+    title: 'Recommendation',
+    description: 'Media recommendation'
+} as const;
+
+export const RecommendationConnectionSchema = {
+    properties: {
+        edges: {
+            anyOf: [
+                {
+                    items: {
+                        anyOf: [
+                            {
+                                '$ref': '#/components/schemas/RecommendationEdge'
+                            },
+                            {
+                                type: 'null'
+                            }
+                        ]
+                    },
+                    type: 'array'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Edges'
+        },
+        nodes: {
+            anyOf: [
+                {
+                    items: {
+                        anyOf: [
+                            {
+                                '$ref': '#/components/schemas/Recommendation'
+                            },
+                            {
+                                type: 'null'
+                            }
+                        ]
+                    },
+                    type: 'array'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Nodes'
+        },
+        pageInfo: {
+            anyOf: [
+                {
+                    '$ref': '#/components/schemas/PageInfo'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            description: 'The pagination information'
+        },
+        __typename: {
+            anyOf: [
+                {
+                    type: 'string',
+                    const: 'RecommendationConnection'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Typename',
+            default: 'RecommendationConnection'
+        }
+    },
+    additionalProperties: false,
+    type: 'object',
+    title: 'RecommendationConnection'
+} as const;
+
+export const RecommendationEdgeSchema = {
+    properties: {
+        node: {
+            anyOf: [
+                {
+                    '$ref': '#/components/schemas/Recommendation'
+                },
+                {
+                    type: 'null'
+                }
+            ]
+        },
+        __typename: {
+            anyOf: [
+                {
+                    type: 'string',
+                    const: 'RecommendationEdge'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Typename',
+            default: 'RecommendationEdge'
+        }
+    },
+    additionalProperties: false,
+    type: 'object',
+    title: 'RecommendationEdge',
+    description: 'Recommendation connection edge'
+} as const;
+
+export const SearchPageSchema = {
+    properties: {
+        pageInfo: {
+            anyOf: [
+                {
+                    '$ref': '#/components/schemas/PageInfo'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            description: 'The pagination information'
+        },
+        media: {
+            anyOf: [
+                {
+                    items: {
+                        anyOf: [
+                            {
+                                '$ref': '#/components/schemas/app__media__graphql_search_schema__Media'
+                            },
+                            {
+                                type: 'null'
+                            }
+                        ]
+                    },
+                    type: 'array'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Media'
+        }
+    },
+    type: 'object',
+    title: 'SearchPage',
+    description: 'Search page response.'
+} as const;
+
+export const StudioSchema = {
+    properties: {
+        id: {
+            type: 'integer',
+            title: 'Id',
+            description: 'The id of the studio'
+        },
+        isAnimationStudio: {
+            type: 'boolean',
+            title: 'Isanimationstudio',
+            description: 'If the studio is an animation studio or a different kind of company'
+        },
+        name: {
+            type: 'string',
+            title: 'Name',
+            description: 'The name of the studio'
+        },
+        __typename: {
+            anyOf: [
+                {
+                    type: 'string',
+                    const: 'Studio'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Typename',
+            default: 'Studio'
+        }
+    },
+    additionalProperties: false,
+    type: 'object',
+    required: ['id', 'isAnimationStudio', 'name'],
+    title: 'Studio',
+    description: 'Animation or production company'
+} as const;
+
+export const StudioConnectionSchema = {
+    properties: {
+        edges: {
+            anyOf: [
+                {
+                    items: {
+                        anyOf: [
+                            {
+                                '$ref': '#/components/schemas/StudioEdge'
+                            },
+                            {
+                                type: 'null'
+                            }
+                        ]
+                    },
+                    type: 'array'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Edges'
+        },
+        nodes: {
+            anyOf: [
+                {
+                    items: {
+                        anyOf: [
+                            {
+                                '$ref': '#/components/schemas/Studio'
+                            },
+                            {
+                                type: 'null'
+                            }
+                        ]
+                    },
+                    type: 'array'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Nodes'
+        },
+        pageInfo: {
+            anyOf: [
+                {
+                    '$ref': '#/components/schemas/PageInfo'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            description: 'The pagination information'
+        },
+        __typename: {
+            anyOf: [
+                {
+                    type: 'string',
+                    const: 'StudioConnection'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Typename',
+            default: 'StudioConnection'
+        }
+    },
+    additionalProperties: false,
+    type: 'object',
+    title: 'StudioConnection'
+} as const;
+
+export const StudioEdgeSchema = {
+    properties: {
+        favouriteOrder: {
+            anyOf: [
+                {
+                    type: 'integer'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Favouriteorder',
+            description: 'The order the character should be displayed from the users favourites'
+        },
+        id: {
+            anyOf: [
+                {
+                    type: 'integer'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Id',
+            description: 'The id of the connection'
+        },
+        isMain: {
+            type: 'boolean',
+            title: 'Ismain',
+            description: 'If the studio is the main animation studio of the anime'
+        },
+        node: {
+            anyOf: [
+                {
+                    '$ref': '#/components/schemas/Studio'
+                },
+                {
+                    type: 'null'
+                }
+            ]
+        },
+        __typename: {
+            anyOf: [
+                {
+                    type: 'string',
+                    const: 'StudioEdge'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Typename',
+            default: 'StudioEdge'
+        }
+    },
+    additionalProperties: false,
+    type: 'object',
+    required: ['isMain'],
+    title: 'StudioEdge',
+    description: 'Studio connection edge'
 } as const;
 
 export const TokenSchema = {
@@ -523,4 +1552,787 @@ export const ValidationErrorSchema = {
     type: 'object',
     required: ['loc', 'msg', 'type'],
     title: 'ValidationError'
+} as const;
+
+export const app__media__graphql_media_schema__MediaSchema = {
+    properties: {
+        averageScore: {
+            anyOf: [
+                {
+                    type: 'integer'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Averagescore',
+            description: "A weighted average score of all the user's scores of the media"
+        },
+        bannerImage: {
+            anyOf: [
+                {
+                    type: 'string'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Bannerimage',
+            description: 'The banner image of the media'
+        },
+        chapters: {
+            anyOf: [
+                {
+                    type: 'integer'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Chapters',
+            description: 'The amount of chapters the manga has when complete'
+        },
+        countryOfOrigin: {
+            anyOf: [
+                {
+                    type: 'string'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Countryoforigin',
+            description: 'Where the media was created. (ISO 3166-1 alpha-2)'
+        },
+        coverImage: {
+            anyOf: [
+                {
+                    '$ref': '#/components/schemas/app__media__graphql_media_schema__MediaCoverImage'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            description: 'The cover images of the media'
+        },
+        description: {
+            anyOf: [
+                {
+                    type: 'string'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Description',
+            description: "Short description of the media's story and characters"
+        },
+        duration: {
+            anyOf: [
+                {
+                    type: 'integer'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Duration',
+            description: 'The general length of each anime episode in minutes'
+        },
+        endDate: {
+            anyOf: [
+                {
+                    '$ref': '#/components/schemas/FuzzyDate'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            description: 'The last official release date of the media'
+        },
+        episodes: {
+            anyOf: [
+                {
+                    type: 'integer'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Episodes',
+            description: 'The amount of episodes the anime has when complete'
+        },
+        externalLinks: {
+            anyOf: [
+                {
+                    items: {
+                        anyOf: [
+                            {
+                                '$ref': '#/components/schemas/MediaExternalLink'
+                            },
+                            {
+                                type: 'null'
+                            }
+                        ]
+                    },
+                    type: 'array'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Externallinks',
+            description: 'External links to another site related to the media'
+        },
+        favourites: {
+            anyOf: [
+                {
+                    type: 'integer'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Favourites',
+            description: "The amount of user's who have favourited the media"
+        },
+        format: {
+            anyOf: [
+                {
+                    '$ref': '#/components/schemas/MediaFormat'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            description: 'The format the media was released in'
+        },
+        genres: {
+            anyOf: [
+                {
+                    items: {
+                        anyOf: [
+                            {
+                                type: 'string'
+                            },
+                            {
+                                type: 'null'
+                            }
+                        ]
+                    },
+                    type: 'array'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Genres',
+            description: 'The genres of the media'
+        },
+        id: {
+            type: 'integer',
+            title: 'Id',
+            description: 'The id of the media'
+        },
+        idMal: {
+            anyOf: [
+                {
+                    type: 'integer'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Idmal',
+            description: 'The mal id of the media'
+        },
+        isAdult: {
+            anyOf: [
+                {
+                    type: 'boolean'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Isadult',
+            description: 'If the media is intended only for 18+ adult audiences'
+        },
+        isLicensed: {
+            anyOf: [
+                {
+                    type: 'boolean'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Islicensed',
+            description: 'If the media is officially licensed or a self-published doujin release'
+        },
+        meanScore: {
+            anyOf: [
+                {
+                    type: 'integer'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Meanscore',
+            description: "Mean score of all the user's scores of the media"
+        },
+        popularity: {
+            anyOf: [
+                {
+                    type: 'integer'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Popularity',
+            description: 'The number of users with the media on their list'
+        },
+        rankings: {
+            anyOf: [
+                {
+                    items: {
+                        anyOf: [
+                            {
+                                '$ref': '#/components/schemas/MediaRank'
+                            },
+                            {
+                                type: 'null'
+                            }
+                        ]
+                    },
+                    type: 'array'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Rankings',
+            description: 'The ranking of the media in a particular time span and format compared to other media'
+        },
+        recommendations: {
+            anyOf: [
+                {
+                    '$ref': '#/components/schemas/RecommendationConnection'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            description: 'User recommendations for similar media'
+        },
+        season: {
+            anyOf: [
+                {
+                    '$ref': '#/components/schemas/MediaSeason'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            description: 'The season the media was initially released in'
+        },
+        seasonYear: {
+            anyOf: [
+                {
+                    type: 'integer'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Seasonyear',
+            description: 'The season year the media was initially released in'
+        },
+        siteUrl: {
+            anyOf: [
+                {
+                    type: 'string'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Siteurl',
+            description: 'The url for the media page on the AniList website'
+        },
+        source: {
+            anyOf: [
+                {
+                    '$ref': '#/components/schemas/MediaSource'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            description: 'Source type the media was adapted from.'
+        },
+        startDate: {
+            anyOf: [
+                {
+                    '$ref': '#/components/schemas/FuzzyDate'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            description: 'The first official release date of the media'
+        },
+        status: {
+            anyOf: [
+                {
+                    '$ref': '#/components/schemas/MediaStatus'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            description: 'The current releasing status of the media'
+        },
+        studios: {
+            anyOf: [
+                {
+                    '$ref': '#/components/schemas/StudioConnection'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            description: 'The companies who produced the media'
+        },
+        synonyms: {
+            anyOf: [
+                {
+                    items: {
+                        anyOf: [
+                            {
+                                type: 'string'
+                            },
+                            {
+                                type: 'null'
+                            }
+                        ]
+                    },
+                    type: 'array'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Synonyms',
+            description: 'Alternative titles of the media'
+        },
+        tags: {
+            anyOf: [
+                {
+                    items: {
+                        anyOf: [
+                            {
+                                '$ref': '#/components/schemas/MediaTag'
+                            },
+                            {
+                                type: 'null'
+                            }
+                        ]
+                    },
+                    type: 'array'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Tags',
+            description: 'List of tags that describes elements and themes of the media'
+        },
+        title: {
+            anyOf: [
+                {
+                    '$ref': '#/components/schemas/app__media__graphql_media_schema__MediaTitle'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            description: 'The official titles of the media in various languages'
+        },
+        trailer: {
+            anyOf: [
+                {
+                    '$ref': '#/components/schemas/MediaTrailer'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            description: 'Media trailer or advertisement'
+        },
+        type: {
+            anyOf: [
+                {
+                    '$ref': '#/components/schemas/MediaType'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            description: 'The type of the media; anime or manga'
+        },
+        updatedAt: {
+            anyOf: [
+                {
+                    type: 'integer'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Updatedat',
+            description: "When the media's data was last updated"
+        },
+        volumes: {
+            anyOf: [
+                {
+                    type: 'integer'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Volumes',
+            description: 'The amount of volumes the manga has when complete'
+        },
+        __typename: {
+            anyOf: [
+                {
+                    type: 'string',
+                    const: 'Media'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Typename',
+            default: 'Media'
+        }
+    },
+    additionalProperties: false,
+    type: 'object',
+    required: ['id'],
+    title: 'Media',
+    description: 'Anime or Manga'
+} as const;
+
+export const app__media__graphql_media_schema__MediaCoverImageSchema = {
+    properties: {
+        color: {
+            anyOf: [
+                {
+                    type: 'string'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Color',
+            description: 'Average #hex color of cover image'
+        },
+        extraLarge: {
+            anyOf: [
+                {
+                    type: 'string'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Extralarge',
+            description: "The cover image url of the media at its largest size. If this size isn't available, large will be provided instead."
+        },
+        large: {
+            anyOf: [
+                {
+                    type: 'string'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Large',
+            description: 'The cover image url of the media at a large size'
+        },
+        medium: {
+            anyOf: [
+                {
+                    type: 'string'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Medium',
+            description: 'The cover image url of the media at medium size'
+        },
+        __typename: {
+            anyOf: [
+                {
+                    type: 'string',
+                    const: 'MediaCoverImage'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Typename',
+            default: 'MediaCoverImage'
+        }
+    },
+    additionalProperties: false,
+    type: 'object',
+    title: 'MediaCoverImage'
+} as const;
+
+export const app__media__graphql_media_schema__MediaTitleSchema = {
+    properties: {
+        english: {
+            anyOf: [
+                {
+                    type: 'string'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'English',
+            description: 'The official english title'
+        },
+        native: {
+            anyOf: [
+                {
+                    type: 'string'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Native',
+            description: "Official title in it's native language"
+        },
+        romaji: {
+            anyOf: [
+                {
+                    type: 'string'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Romaji',
+            description: 'The romanization of the native language title'
+        },
+        userPreferred: {
+            anyOf: [
+                {
+                    type: 'string'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Userpreferred',
+            description: 'The currently authenticated users preferred title language. Default romaji for non-authenticated'
+        },
+        __typename: {
+            anyOf: [
+                {
+                    type: 'string',
+                    const: 'MediaTitle'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Typename',
+            default: 'MediaTitle'
+        }
+    },
+    additionalProperties: false,
+    type: 'object',
+    title: 'MediaTitle',
+    description: 'The official titles of the media in various languages'
+} as const;
+
+export const app__media__graphql_search_schema__MediaSchema = {
+    properties: {
+        id: {
+            type: 'integer',
+            title: 'Id',
+            description: 'The id of the media'
+        },
+        title: {
+            anyOf: [
+                {
+                    '$ref': '#/components/schemas/app__media__graphql_search_schema__MediaTitle'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            description: 'The official titles of the media in various languages'
+        },
+        coverImage: {
+            anyOf: [
+                {
+                    '$ref': '#/components/schemas/app__media__graphql_search_schema__MediaCoverImage'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            description: 'The cover images of the media'
+        },
+        type: {
+            anyOf: [
+                {
+                    '$ref': '#/components/schemas/MediaType'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            description: 'The type of the media; anime or manga'
+        },
+        format: {
+            anyOf: [
+                {
+                    '$ref': '#/components/schemas/MediaFormat'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            description: 'The format the media was released in'
+        },
+        status: {
+            anyOf: [
+                {
+                    '$ref': '#/components/schemas/MediaStatus'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            description: 'The current releasing status of the media'
+        },
+        averageScore: {
+            anyOf: [
+                {
+                    type: 'integer'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Averagescore',
+            description: "A weighted average score of all the user's scores of the media"
+        },
+        startDate: {
+            anyOf: [
+                {
+                    '$ref': '#/components/schemas/FuzzyDate'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            description: 'The first official release date of the media'
+        }
+    },
+    additionalProperties: false,
+    type: 'object',
+    required: ['id'],
+    title: 'Media',
+    description: 'Anime or Manga'
+} as const;
+
+export const app__media__graphql_search_schema__MediaCoverImageSchema = {
+    properties: {
+        large: {
+            anyOf: [
+                {
+                    type: 'string'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Large',
+            description: 'The cover image url of the media at a large size'
+        },
+        medium: {
+            anyOf: [
+                {
+                    type: 'string'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Medium',
+            description: 'The cover image url of the media at medium size'
+        }
+    },
+    additionalProperties: false,
+    type: 'object',
+    title: 'MediaCoverImage'
+} as const;
+
+export const app__media__graphql_search_schema__MediaTitleSchema = {
+    properties: {
+        english: {
+            anyOf: [
+                {
+                    type: 'string'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'English',
+            description: 'The official english title'
+        },
+        native: {
+            anyOf: [
+                {
+                    type: 'string'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Native',
+            description: "Official title in it's native language"
+        },
+        romaji: {
+            anyOf: [
+                {
+                    type: 'string'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Romaji',
+            description: 'The romanization of the native language title'
+        }
+    },
+    additionalProperties: false,
+    type: 'object',
+    title: 'MediaTitle',
+    description: 'The official titles of the media in various languages'
 } as const;
