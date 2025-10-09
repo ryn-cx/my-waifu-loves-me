@@ -61,14 +61,67 @@ services:
       - --log
       # Enable the Dashboard and API
       - --api
+      # Enable Prometheus metrics
+      - --metrics.prometheus=true
+      - --metrics.prometheus.addEntryPointsLabels=true
+      - --metrics.prometheus.addServicesLabels=true
     networks:
       # Use the public network created to be shared between Traefik and
       # any other service that needs to be publicly available with HTTPS
       - traefik-public
 
+  prometheus:
+    image: prom/prometheus:latest
+    restart: always
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus-data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+    labels:
+      - traefik.enable=true
+      - traefik.docker.network=traefik-public
+      - traefik.http.services.prometheus.loadbalancer.server.port=9090
+      - traefik.http.routers.prometheus-http.entrypoints=http
+      - traefik.http.routers.prometheus-http.rule=Host(`prometheus.${DOMAIN?Variable not set}`)
+      - traefik.http.routers.prometheus-http.middlewares=https-redirect
+      - traefik.http.routers.prometheus-https.entrypoints=https
+      - traefik.http.routers.prometheus-https.rule=Host(`prometheus.${DOMAIN?Variable not set}`)
+      - traefik.http.routers.prometheus-https.tls=true
+      - traefik.http.routers.prometheus-https.tls.certresolver=le
+      - traefik.http.routers.prometheus-https.middlewares=admin-auth
+    networks:
+      - traefik-public
+
+  grafana:
+    image: grafana/grafana:latest
+    restart: always
+    volumes:
+      - grafana-data:/var/lib/grafana
+    environment:
+      - GF_SECURITY_ADMIN_USER=${USERNAME:-admin}
+      - GF_SECURITY_ADMIN_PASSWORD=${PASSWORD?Variable not set}
+      - GF_USERS_ALLOW_SIGN_UP=false
+    labels:
+      - traefik.enable=true
+      - traefik.docker.network=traefik-public
+      - traefik.http.services.grafana.loadbalancer.server.port=3000
+      - traefik.http.routers.grafana-http.entrypoints=http
+      - traefik.http.routers.grafana-http.rule=Host(`grafana.${DOMAIN?Variable not set}`)
+      - traefik.http.routers.grafana-http.middlewares=https-redirect
+      - traefik.http.routers.grafana-https.entrypoints=https
+      - traefik.http.routers.grafana-https.rule=Host(`grafana.${DOMAIN?Variable not set}`)
+      - traefik.http.routers.grafana-https.tls=true
+      - traefik.http.routers.grafana-https.tls.certresolver=le
+    networks:
+      - traefik-public
+
 volumes:
   # Create a volume to store the certificates, even if the container is recreated
   traefik-public-certificates:
+  prometheus-data:
+  grafana-data:
 
 networks:
   # Use the previously created public network "traefik-public", shared with other
