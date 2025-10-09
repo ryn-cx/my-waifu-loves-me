@@ -3,7 +3,14 @@ import { Box, IconButton } from "@chakra-ui/react"
 import { useState } from "react"
 import { FaBars } from "react-icons/fa"
 
-import { DrawerBackdrop, DrawerRoot, DrawerTrigger } from "../ui/drawer"
+import {
+  DrawerBackdrop,
+  DrawerBody,
+  DrawerCloseTrigger,
+  DrawerContent,
+  DrawerRoot,
+  DrawerTrigger,
+} from "../ui/drawer"
 import SidebarItems from "./SidebarItems"
 
 const Sidebar = () => {
@@ -31,6 +38,12 @@ const Sidebar = () => {
             <FaBars />
           </IconButton>
         </DrawerTrigger>
+        <DrawerContent>
+          <DrawerCloseTrigger />
+          <DrawerBody>
+            <SidebarItems onClose={() => setOpen(false)} />
+          </DrawerBody>
+        </DrawerContent>
       </DrawerRoot>
 
       {/* Desktop */}
