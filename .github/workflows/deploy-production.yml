@@ -25,6 +25,7 @@ jobs:
       EMAILS_FROM_EMAIL: ${{ secrets.EMAILS_FROM_EMAIL }}
       POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
       SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
+      BACKEND_CORS_ORIGINS: "http://${{ secrets.DOMAIN_PRODUCTION }},https://${{ secrets.DOMAIN_PRODUCTION }},http://dashboard.${{ secrets.DOMAIN_PRODUCTION }},https://dashboard.${{ secrets.DOMAIN_PRODUCTION }}"
     steps:
       - name: Checkout
         uses: actions/checkout@v5
