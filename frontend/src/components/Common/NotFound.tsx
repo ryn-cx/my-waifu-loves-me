@@ -40,6 +40,7 @@ const NotFound = () => {
             hideStatuses: undefined,
             hideNotOnList: undefined,
             useLinearScaling: undefined,
+            minConnections: undefined,
           }}
         >
           <Button variant="solid" colorScheme="teal" mt={4} alignSelf="center">

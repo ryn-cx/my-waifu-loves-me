@@ -55,12 +55,13 @@ const SidebarItems = ({ onClose }: SidebarItemsProps) => {
   const usePopularityCompensation =
     searchParams?.usePopularityCompensation || false
   const useLinearScaling = searchParams?.useLinearScaling || false
+  const minConnections = searchParams?.minConnections
 
   const mediaMutation = useMutation({
     mutationFn: async (id: number) => {
       return MediaService.readMedia({ mediaId: id })
     },
-    onSuccess: (id) => {
+    onSuccess: (_data, id) => {
       // Navigate to home with the media ID
       navigate({
         to: "/",
@@ -196,6 +197,7 @@ const SidebarItems = ({ onClose }: SidebarItemsProps) => {
                   hideStatuses: undefined,
                   hideNotOnList: undefined,
                   useLinearScaling: undefined,
+                  minConnections: undefined,
                 },
               })
               onClose?.()
@@ -408,6 +410,31 @@ const SidebarItems = ({ onClose }: SidebarItemsProps) => {
               Linear Node Scaling
             </Text>
           </Checkbox>
+
+          <Field label="Minimum Connections">
+            <Input
+              type="number"
+              min="0"
+              value={minConnections ?? ""}
+              onChange={(e) => {
+                const value = e.target.value
+                const numValue = value === "" ? null : parseInt(value, 10)
+                navigate({
+                  to: "/",
+                  search: (prev: any) => ({
+                    ...prev,
+                    minConnections:
+                      numValue === null || Number.isNaN(numValue)
+                        ? undefined
+                        : numValue,
+                  }),
+                  replace: false,
+                })
+              }}
+              placeholder="No limit"
+              size="sm"
+            />
+          </Field>
 
           <Separator my={3} />
 

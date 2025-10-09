@@ -1,8 +1,8 @@
 // TODO: Validate File
 import { Box, Container, Text } from "@chakra-ui/react"
-import { useMutation } from "@tanstack/react-query"
+import { useMutation, useQueries, useQuery } from "@tanstack/react-query"
 import { createFileRoute, useNavigate } from "@tanstack/react-router"
-import { useEffect, useState } from "react"
+import { useEffect, useMemo } from "react"
 import {
   type app__media__graphql_media_schema__Media,
   type MediaListCollection,
@@ -12,40 +12,47 @@ import {
 import { MediaGraph } from "@/components/Media/MediaGraph"
 import { toaster } from "@/components/ui/toaster"
 
+const parseStringArray = (value: unknown): string[] | undefined => {
+  if (typeof value === "string") {
+    const arr = value.split(",").filter(Boolean)
+    return arr.length > 0 ? arr : undefined
+  }
+  if (Array.isArray(value)) {
+    const arr = value.filter(Boolean).map(String)
+    return arr.length > 0 ? arr : undefined
+  }
+  return undefined
+}
+
+const parseBoolean = (value: unknown): boolean | undefined => {
+  if (value === "true" || value === true) {
+    return true
+  }
+  return undefined
+}
+
+const parsePositiveNumber = (value: unknown): number | undefined => {
+  if (typeof value === "string") {
+    const parsed = parseInt(value, 10)
+    return !Number.isNaN(parsed) && parsed > 0 ? parsed : undefined
+  }
+  if (typeof value === "number" && value > 0) {
+    return value
+  }
+  return undefined
+}
+
 export const Route = createFileRoute("/_layout/")({
   component: MediaPage,
   validateSearch: (search: Record<string, unknown>) => {
-    let parsedIds: string[] = []
-
-    if (typeof search.ids === "string") {
-      parsedIds = search.ids.split(",").filter(Boolean)
-    } else if (Array.isArray(search.ids)) {
-      parsedIds = search.ids.filter(Boolean).map(String)
-    }
-
-    let hideStatuses: string[] = []
-    if (typeof search.hideStatuses === "string") {
-      hideStatuses = search.hideStatuses.split(",").filter(Boolean)
-    } else if (Array.isArray(search.hideStatuses)) {
-      hideStatuses = search.hideStatuses.filter(Boolean).map(String)
-    }
-
     return {
-      ids: parsedIds.length > 0 ? parsedIds : undefined,
+      ids: parseStringArray(search.ids),
       user: (search.user as string) || undefined,
-      usePopularityCompensation:
-        search.usePopularityCompensation === "true" ||
-        search.usePopularityCompensation === true ||
-        undefined,
-      hideStatuses: hideStatuses.length > 0 ? hideStatuses : undefined,
-      hideNotOnList:
-        search.hideNotOnList === "true" ||
-        search.hideNotOnList === true ||
-        undefined,
-      useLinearScaling:
-        search.useLinearScaling === "true" ||
-        search.useLinearScaling === true ||
-        undefined,
+      usePopularityCompensation: parseBoolean(search.usePopularityCompensation),
+      hideStatuses: parseStringArray(search.hideStatuses),
+      hideNotOnList: parseBoolean(search.hideNotOnList),
+      useLinearScaling: parseBoolean(search.useLinearScaling),
+      minConnections: parsePositiveNumber(search.minConnections),
     }
   },
 })
@@ -59,118 +66,146 @@ function MediaPage() {
     hideStatuses = [],
     hideNotOnList = false,
     useLinearScaling = false,
+    minConnections,
   } = Route.useSearch()
-  const [mediaItems, setMediaItems] = useState<
-    app__media__graphql_media_schema__Media[]
-  >([])
-  const [userList, setUserList] = useState<MediaListCollection | null>(null)
-  const [loadedIds, setLoadedIds] = useState<Set<number>>(
-    () =>
-      new Set(
-        ids.map((id) => parseInt(id, 10)).filter((id) => !Number.isNaN(id)),
-      ),
+
+  const numericIds = useMemo(
+    () => ids.map((id) => parseInt(id, 10)).filter((id) => !Number.isNaN(id)),
+    [ids],
   )
 
-  const updateUrl = (newIds: number[], newUser?: string) => {
+  const mediaQueries = useQueries({
+    queries: numericIds.map((id) => ({
+      queryKey: ["media", id],
+      queryFn: () => MediaService.readMedia({ mediaId: id }),
+      staleTime: 1000 * 60 * 5, // 5 minutes
+      retry: false,
+    })),
+  })
+
+  const { data: userList, isError: isUserListError } = useQuery<
+    MediaListCollection | null,
+    Error
+  >({
+    queryKey: ["userList", user],
+    queryFn: () =>
+      user ? MediaService.readUser({ userName: user }) : Promise.resolve(null),
+    enabled: !!user,
+    staleTime: 1000 * 60 * 5, // 5 minutes
+    retry: false,
+  })
+
+  const mediaItems = useMemo(
+    () =>
+      mediaQueries
+        .map((query) => query.data)
+        .filter(
+          (
+            data,
+          ): data is app__media__graphql_media_schema__Media =>
+            data !== undefined,
+        ),
+    [mediaQueries],
+  )
+
+  const loadedIds = useMemo(
+    () => new Set(mediaItems.map((item) => item.id)),
+    [mediaItems],
+  )
+
+  const updateUrl = (params: {
+    newIds?: string[]
+    newUser?: string | null
+    newUsePopularityCompensation?: boolean
+    newHideStatuses?: string[]
+    newHideNotOnList?: boolean
+    newUseLinearScaling?: boolean
+    newMinConnections?: number | null
+  }) => {
     navigate({
-      search: (prev: any) => ({
+      search: (prev) => ({
         ...prev,
-        ids: newIds.length > 0 ? newIds.join(",") : undefined,
-        user: newUser || prev.user,
+        ids: params.newIds !== undefined ? params.newIds : prev.ids,
+        user:
+          params.newUser !== undefined
+            ? params.newUser === null
+              ? undefined
+              : params.newUser
+            : prev.user,
+        usePopularityCompensation:
+          params.newUsePopularityCompensation !== undefined
+            ? params.newUsePopularityCompensation || undefined
+            : prev.usePopularityCompensation,
+        hideStatuses:
+          params.newHideStatuses !== undefined
+            ? params.newHideStatuses
+            : prev.hideStatuses,
+        hideNotOnList:
+          params.newHideNotOnList !== undefined
+            ? params.newHideNotOnList || undefined
+            : prev.hideNotOnList,
+        useLinearScaling:
+          params.newUseLinearScaling !== undefined
+            ? params.newUseLinearScaling || undefined
+            : prev.useLinearScaling,
+        minConnections:
+          params.newMinConnections !== undefined
+            ? params.newMinConnections === null
+              ? undefined
+              : params.newMinConnections
+            : prev.minConnections,
       }),
       replace: true,
     })
   }
 
-  const mediaMutation = useMutation({
+  const addMediaMutation = useMutation({
     mutationFn: async (id: number) => {
+      if (loadedIds.has(id)) {
+        toaster.create({
+          title: "Media already loaded",
+          type: "info",
+        })
+        return null
+      }
       return MediaService.readMedia({ mediaId: id })
     },
     onSuccess: (data, id) => {
-      setMediaItems((prev) => [...prev, data])
-      setLoadedIds((prev) => {
-        const newSet = new Set([...prev, id])
-        updateUrl(Array.from(newSet), user)
-        return newSet
-      })
-      toaster.create({
-        title: "Media loaded successfully",
-        type: "success",
-      })
+      if (data) {
+        const newIds = Array.from(new Set([...ids, id.toString()]))
+        updateUrl({ newIds })
+        toaster.create({
+          title: "Media loaded successfully",
+          type: "success",
+        })
+      }
     },
-    onError: () => {
+    onError: (error, id) => {
       toaster.create({
-        title: "Failed to fetch media",
+        title: `Failed to fetch media ${id}`,
+        description: (error as Error).message,
         type: "error",
       })
     },
   })
 
   useEffect(() => {
-    const idsToLoad = ids
-      .map((id) => parseInt(id, 10))
-      .filter((id) => !Number.isNaN(id))
-
-    // TODO: Probably a better way to do this.
-    if (idsToLoad.length === 0 && mediaItems.length > 0) {
-      setMediaItems([])
-      setLoadedIds(new Set())
-      setUserList(null)
-      return
-    }
-
-    const currentIds = new Set(mediaItems.map((m) => m.id))
-
-    // Find IDs that need to be loaded (in URL but not in state)
-    const idsToFetch = idsToLoad.filter((id) => !currentIds.has(id))
-
-    if (idsToFetch.length > 0) {
-      idsToFetch.forEach((id) => {
-        MediaService.readMedia({ mediaId: id })
-          .then((data) => {
-            setMediaItems((prev) => {
-              // Avoid duplicates
-              if (prev.find((m) => m.id === data.id)) return prev
-              return [...prev, data]
-            })
-          })
-          .catch(() => {
-            toaster.create({
-              title: `Failed to load media ${id}`,
-              type: "error",
-            })
-          })
+    if (isUserListError) {
+      toaster.create({
+        title: `Failed to load user ${user}`,
+        type: "error",
       })
+      updateUrl({ newUser: null })
     }
-
-    if (user && !userList) {
-      MediaService.readUser({ userName: user })
-        .then((data) => {
-          setUserList(data)
-        })
-        .catch(() => {
-          toaster.create({
-            title: `Failed to load user ${user}`,
-            type: "error",
-          })
-        })
-    }
-  }, [ids, user, mediaItems.length, mediaItems.map, userList])
+  }, [isUserListError, user, updateUrl])
 
   const handleAddMedia = (id: number) => {
-    if (!loadedIds.has(id)) {
-      mediaMutation.mutate(id)
-    }
+    addMediaMutation.mutate(id)
   }
 
   const handleRemoveMedia = (id: number) => {
-    setMediaItems((prev) => prev.filter((m) => m.id !== id))
-    setLoadedIds((prev) => {
-      const newSet = new Set(prev)
-      newSet.delete(id)
-      updateUrl(Array.from(newSet), user)
-      return newSet
-    })
+    const newIds = ids.filter((mediaId) => mediaId !== id.toString())
+    updateUrl({ newIds })
   }
 
   return (
@@ -179,7 +214,7 @@ function MediaPage() {
         <Box h="100%" overflow="hidden">
           <MediaGraph
             mediaItems={mediaItems}
-            userList={userList}
+            userList={userList || null}
             onAddMedia={handleAddMedia}
             onRemoveMedia={handleRemoveMedia}
             loadedIds={loadedIds}
@@ -187,6 +222,7 @@ function MediaPage() {
             statusFilter={new Set(hideStatuses as MediaListStatus[])}
             hideNotOnList={hideNotOnList}
             useLinearScaling={useLinearScaling}
+            minConnections={minConnections}
           />
         </Box>
       ) : (

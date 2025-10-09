@@ -30,6 +30,7 @@ interface MediaGraphProps {
   statusFilter?: Set<MediaListStatus>
   hideNotOnList?: boolean
   useLinearScaling?: boolean
+  minConnections?: number
 }
 
 const STATUS_COLORS: Record<MediaListStatus, string> = {
@@ -191,6 +192,7 @@ export function MediaGraph({
   statusFilter = new Set(),
   hideNotOnList = false,
   useLinearScaling = false,
+  minConnections,
 }: MediaGraphProps) {
   const containerRef = useRef<HTMLDivElement>(null)
   const sigmaRef = useRef<Sigma | null>(null)
@@ -241,6 +243,22 @@ export function MediaGraph({
         hideNotOnList,
       )
     })
+
+    // Filter out nodes that do not have enough connections.
+    if (minConnections !== undefined && minConnections > 0) {
+      const nodesToRemove: string[] = []
+      graph.forEachNode((node) => {
+        const nodeId = parseInt(node, 10)
+        const isUserChosen = loadedIds.has(nodeId)
+        const connectionCount = ratingCount.get(node) || 0
+
+        if (!isUserChosen && connectionCount < minConnections) {
+          nodesToRemove.push(node)
+        }
+      })
+
+      nodesToRemove.forEach((node) => graph.dropNode(node))
+    }
 
     // Calculate maxRating only from recommendation nodes, exclude user chosen nodes
     // because they will probably be the highest value by far and skew the scaling.
@@ -378,6 +396,7 @@ export function MediaGraph({
     hideNotOnList,
     mediaStatusMap,
     useLinearScaling,
+    minConnections,
   ])
 
   const renderTooltip = (
