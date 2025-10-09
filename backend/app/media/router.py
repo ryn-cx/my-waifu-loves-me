@@ -101,7 +101,7 @@ def read_user(session: SessionDep, user_name: str) -> MediaListCollection:
 
         user_file = UserFile(
             id=user_name.lower(),
-            content=json.dumps(combined_data.model_dump()),
+            content=combined_data.model_dump_json(by_alias=True),
             data_timestamp=tz_datetime.now(),
         )
         session.add(user_file)
