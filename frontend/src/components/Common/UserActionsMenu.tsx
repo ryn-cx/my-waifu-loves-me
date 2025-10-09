@@ -1,8 +1,8 @@
 import { IconButton } from "@chakra-ui/react"
 import { BsThreeDotsVertical } from "react-icons/bs"
 import type { UserPublic } from "@/client"
-// import DeleteUser from "../Admin/DeleteUser"
-// import EditUser from "../Admin/EditUser"
+import DeleteUser from "../Admin/DeleteUser"
+import EditUser from "../Admin/EditUser"
 import { MenuContent, MenuRoot, MenuTrigger } from "../ui/menu"
 
 interface UserActionsMenuProps {
@@ -10,10 +10,7 @@ interface UserActionsMenuProps {
   disabled?: boolean
 }
 
-export const UserActionsMenu = ({
-  user: _user,
-  disabled,
-}: UserActionsMenuProps) => {
+export const UserActionsMenu = ({ user, disabled }: UserActionsMenuProps) => {
   return (
     <MenuRoot>
       <MenuTrigger asChild>
@@ -22,8 +19,8 @@ export const UserActionsMenu = ({
         </IconButton>
       </MenuTrigger>
       <MenuContent>
-        {/* <EditUser user={user} />
-        <DeleteUser id={user.id} /> */}
+        <EditUser user={user} />
+        <DeleteUser id={user.id} />
       </MenuContent>
     </MenuRoot>
   )

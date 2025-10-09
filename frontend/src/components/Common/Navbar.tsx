@@ -2,6 +2,7 @@ import { Flex, Image, useBreakpointValue } from "@chakra-ui/react"
 import { Link } from "@tanstack/react-router"
 
 import Logo from "/assets/images/fastapi-logo.svg"
+import UserMenu from "./UserMenu"
 
 function Navbar() {
   const display = useBreakpointValue({ base: "none", md: "flex" })
@@ -18,19 +19,12 @@ function Navbar() {
       top={0}
       p={4}
     >
-      <Link
-        to="/"
-        search={{
-          ids: undefined,
-          user: undefined,
-          usePopularityCompensation: undefined,
-          hideStatuses: undefined,
-          hideNotOnList: undefined,
-          useLinearScaling: undefined,
-        }}
-      >
+      <Link to="/">
         <Image src={Logo} alt="Logo" maxW="3xs" p={2} />
       </Link>
+      <Flex gap={2} alignItems="center">
+        <UserMenu />
+      </Flex>
     </Flex>
   )
 }
