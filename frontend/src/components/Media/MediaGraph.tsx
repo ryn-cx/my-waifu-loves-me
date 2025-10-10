@@ -32,7 +32,6 @@ interface MediaGraphProps {
   useLinearScaling?: boolean
   minConnections?: number
   colorEdgesByTag?: boolean
-  maxRecommendations?: number
 }
 
 const STATUS_COLORS: Record<MediaListStatus, string> = {
@@ -133,14 +132,9 @@ function addRecomendationsToGraph(
   statusFilter: Set<MediaListStatus>,
   hideNotOnList: boolean,
   colorEdgesByTag: boolean,
-  maxRecommendations?: number,
 ) {
   const recommendations = media.recommendations?.nodes || []
-  const limitedRecommendations = maxRecommendations !== undefined
-    ? recommendations.slice(0, maxRecommendations)
-    : recommendations
-
-  limitedRecommendations.forEach((rec) => {
+  recommendations.forEach((rec) => {
     if (!rec?.mediaRecommendation) return
 
     const recMedia = rec.mediaRecommendation
@@ -256,7 +250,6 @@ export function MediaGraph({
   useLinearScaling = false,
   minConnections,
   colorEdgesByTag = false,
-  maxRecommendations,
 }: MediaGraphProps) {
   const containerRef = useRef<HTMLDivElement>(null)
   const sigmaRef = useRef<Sigma | null>(null)
@@ -306,7 +299,6 @@ export function MediaGraph({
         statusFilter,
         hideNotOnList,
         colorEdgesByTag,
-        maxRecommendations,
       )
     })
 
@@ -466,7 +458,6 @@ export function MediaGraph({
     useLinearScaling,
     minConnections,
     colorEdgesByTag,
-    maxRecommendations,
   ])
 
   const renderTooltip = (

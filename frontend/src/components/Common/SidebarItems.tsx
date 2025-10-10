@@ -57,7 +57,6 @@ const SidebarItems = ({ onClose }: SidebarItemsProps) => {
   const useLinearScaling = searchParams?.useLinearScaling || false
   const minConnections = searchParams?.minConnections
   const colorEdgesByTag = searchParams?.colorEdgesByTag || false
-  const maxRecommendations = searchParams?.maxRecommendations
 
   const mediaMutation = useMutation({
     mutationFn: async (id: number) => {
@@ -201,7 +200,6 @@ const SidebarItems = ({ onClose }: SidebarItemsProps) => {
                   useLinearScaling: undefined,
                   minConnections: undefined,
                   colorEdgesByTag: undefined,
-                  maxRecommendations: undefined,
                 },
               })
               onClose?.()
@@ -446,31 +444,6 @@ const SidebarItems = ({ onClose }: SidebarItemsProps) => {
                   search: (prev: any) => ({
                     ...prev,
                     minConnections:
-                      numValue === null || Number.isNaN(numValue)
-                        ? undefined
-                        : numValue,
-                  }),
-                  replace: false,
-                })
-              }}
-              placeholder="No limit"
-              size="sm"
-            />
-          </Field>
-
-          <Field label="Max Recommendations Per Node">
-            <Input
-              type="number"
-              min="1"
-              value={maxRecommendations ?? ""}
-              onChange={(e) => {
-                const value = e.target.value
-                const numValue = value === "" ? null : parseInt(value, 10)
-                navigate({
-                  to: "/",
-                  search: (prev: any) => ({
-                    ...prev,
-                    maxRecommendations:
                       numValue === null || Number.isNaN(numValue)
                         ? undefined
                         : numValue,

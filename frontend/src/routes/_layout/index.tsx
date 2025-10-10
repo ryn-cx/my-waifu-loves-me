@@ -54,7 +54,6 @@ export const Route = createFileRoute("/_layout/")({
       useLinearScaling: parseBoolean(search.useLinearScaling),
       minConnections: parsePositiveNumber(search.minConnections),
       colorEdgesByTag: parseBoolean(search.colorEdgesByTag),
-      maxRecommendations: parsePositiveNumber(search.maxRecommendations),
     }
   },
 })
@@ -70,7 +69,6 @@ function MediaPage() {
     useLinearScaling = false,
     minConnections,
     colorEdgesByTag = false,
-    maxRecommendations,
   } = Route.useSearch()
 
   const numericIds = useMemo(
@@ -126,7 +124,6 @@ function MediaPage() {
     newUseLinearScaling?: boolean
     newMinConnections?: number | null
     newColorEdgesByTag?: boolean
-    newMaxRecommendations?: number | null
   }) => {
     navigate({
       search: (prev) => ({
@@ -164,12 +161,6 @@ function MediaPage() {
           params.newColorEdgesByTag !== undefined
             ? params.newColorEdgesByTag || undefined
             : prev.colorEdgesByTag,
-        maxRecommendations:
-          params.newMaxRecommendations !== undefined
-            ? params.newMaxRecommendations === null
-              ? undefined
-              : params.newMaxRecommendations
-            : prev.maxRecommendations,
       }),
       replace: true,
     })
@@ -240,7 +231,6 @@ function MediaPage() {
             useLinearScaling={useLinearScaling}
             minConnections={minConnections}
             colorEdgesByTag={colorEdgesByTag}
-            maxRecommendations={maxRecommendations}
           />
         </Box>
       ) : (
