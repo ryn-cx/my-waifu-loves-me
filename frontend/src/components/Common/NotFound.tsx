@@ -41,6 +41,7 @@ const NotFound = () => {
             hideNotOnList: undefined,
             useLinearScaling: undefined,
             minConnections: undefined,
+            colorEdgesByTag: undefined,
           }}
         >
           <Button variant="solid" colorScheme="teal" mt={4} alignSelf="center">
