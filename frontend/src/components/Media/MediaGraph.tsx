@@ -31,6 +31,8 @@ interface MediaGraphProps {
   hideNotOnList?: boolean
   useLinearScaling?: boolean
   minConnections?: number
+  colorEdgesByTag?: boolean
+  maxRecommendations?: number
 }
 
 const STATUS_COLORS: Record<MediaListStatus, string> = {
@@ -52,12 +54,15 @@ function getEdgeScaleFactor(
 
   mediaItems.forEach((media) => {
     const recommendations = media.recommendations?.nodes || []
+    const sourcePopularity = media.popularity || 1
+
     recommendations.forEach((rec) => {
       if (!rec?.rating) return
       if (!rec?.mediaRecommendation) return
 
       if (usePopularityCompensation) {
-        const adjusted = rec.rating / (rec.mediaRecommendation.popularity || 1)
+        const recPopularity = rec.mediaRecommendation.popularity || 1
+        const adjusted = rec.rating / (sourcePopularity * recPopularity)
         if (adjusted > largestSingleRecommendationCount) {
           largestSingleRecommendationCount = adjusted
         }
@@ -69,6 +74,19 @@ function getEdgeScaleFactor(
     })
   })
   return 10 / largestSingleRecommendationCount
+}
+
+function calculateEdgeSize(
+  rating: number,
+  sourcePopularity: number,
+  recPopularity: number,
+  edgeScaleFactor: number,
+  usePopularityCompensation: boolean,
+) {
+  if (usePopularityCompensation) {
+    return Math.max(1, (rating / (sourcePopularity * recPopularity)) * edgeScaleFactor)
+  }
+  return Math.max(1, rating * edgeScaleFactor)
 }
 
 function getMediaStatusMap(userList: MediaListCollection | null) {
@@ -114,9 +132,15 @@ function addRecomendationsToGraph(
   usePopularityCompensation: boolean,
   statusFilter: Set<MediaListStatus>,
   hideNotOnList: boolean,
+  colorEdgesByTag: boolean,
+  maxRecommendations?: number,
 ) {
   const recommendations = media.recommendations?.nodes || []
-  recommendations.forEach((rec) => {
+  const limitedRecommendations = maxRecommendations !== undefined
+    ? recommendations.slice(0, maxRecommendations)
+    : recommendations
+
+  limitedRecommendations.forEach((rec) => {
     if (!rec?.mediaRecommendation) return
 
     const recMedia = rec.mediaRecommendation
@@ -162,24 +186,62 @@ function addRecomendationsToGraph(
 
     ratingCount.set(recId, (ratingCount.get(recId) || 0) + 1)
     if (!graph.hasEdge(mediaId, recId)) {
-      console.log(
-        ((rating || 0) / (rec.mediaRecommendation.popularity || 1)) *
-          edgeScaleFactor,
+      const edgeSize = calculateEdgeSize(
+        rating || 0,
+        media.popularity || 1,
+        recMedia.popularity || 1,
+        edgeScaleFactor,
+        usePopularityCompensation,
       )
-      const edgeSize = usePopularityCompensation
-        ? Math.max(
-            1,
-            ((rating || 0) / (rec.mediaRecommendation.popularity || 1)) *
-              edgeScaleFactor,
-          )
-        : Math.max(1, (rating || 0) * edgeScaleFactor)
 
-      graph.addEdge(mediaId, recId, {
-        color: "#cbd5e0",
-        size: edgeSize,
-      })
+      if (colorEdgesByTag) {
+        const bestTag = getBestTag(media, recMedia)
+        graph.addEdge(mediaId, recId, {
+          color: generateColor(bestTag),
+          size: edgeSize,
+          label: bestTag,
+        })
+      } else {
+        graph.addEdge(mediaId, recId, {
+          color: "#cbd5e0",
+          size: edgeSize,
+        })
+      }
     }
   })
+}
+
+// Based on https://stackoverflow.com/questions/7616461/generate-a-hash-from-string-in-javascript
+const generateColor = (string: string) => {
+  let hash = 0;
+  for (const char of string) {
+    hash = (hash << 5) - hash + char.charCodeAt(0);
+    hash |= 0; // Constrain to 32bit integer
+  }
+  const hexHash = Math.abs(hash).toString(16)
+  return `#${hexHash.slice(0, 6)}`
+};
+
+function getBestTag(media: app__media__graphql_media_schema__Media, recMedia: app__media__graphql_media_schema__Media) {
+  let bestTag = ""
+  let highestScore = 0
+
+  for (const sourceTag of media.tags || []) {
+    if (!sourceTag?.name || !sourceTag?.rank) continue
+
+    for (const recTag of recMedia.tags || []) {
+      if (!recTag?.name || !recTag?.rank) continue
+
+      if (sourceTag.name === recTag.name) {
+        const score = sourceTag.rank * recTag.rank
+        if (score > highestScore) {
+          highestScore = score
+          bestTag = sourceTag.name
+        }
+      }
+    }
+  }
+  return bestTag
 }
 
 export function MediaGraph({
@@ -193,6 +255,8 @@ export function MediaGraph({
   hideNotOnList = false,
   useLinearScaling = false,
   minConnections,
+  colorEdgesByTag = false,
+  maxRecommendations,
 }: MediaGraphProps) {
   const containerRef = useRef<HTMLDivElement>(null)
   const sigmaRef = useRef<Sigma | null>(null)
@@ -241,6 +305,8 @@ export function MediaGraph({
         usePopularityCompensation,
         statusFilter,
         hideNotOnList,
+        colorEdgesByTag,
+        maxRecommendations,
       )
     })
 
@@ -322,7 +388,9 @@ export function MediaGraph({
       },
     })
 
-    const sigma = new Sigma(graph, containerRef.current, {})
+    const sigma = new Sigma(graph, containerRef.current, {
+      renderEdgeLabels: true,
+    })
 
     const getMediaFromNode = (
       nodeId: number,
@@ -397,6 +465,8 @@ export function MediaGraph({
     mediaStatusMap,
     useLinearScaling,
     minConnections,
+    colorEdgesByTag,
+    maxRecommendations,
   ])
 
   const renderTooltip = (
