@@ -72,7 +72,7 @@ function getEdgeScaleFactor(
       }
     })
   })
-  return 10 / largestSingleRecommendationCount
+  return 20 / largestSingleRecommendationCount
 }
 
 function calculateEdgeSize(
@@ -100,6 +100,30 @@ function getMediaStatusMap(userList: MediaListCollection | null) {
     }
   }
   return mediaStatusMap
+}
+
+function applyMinimumConnectionsFilter(
+  graph: Graph,
+  ratingCount: Map<string, number>,
+  loadedIds: Set<number>,
+  minConnections?: number,
+) {
+  if (minConnections === undefined || minConnections <= 0) {
+    return
+  }
+
+  const nodesToRemove: string[] = []
+  graph.forEachNode((node) => {
+    const nodeId = parseInt(node, 10)
+    const isUserChosen = loadedIds.has(nodeId)
+    const connectionCount = ratingCount.get(node) || 0
+
+    if (!isUserChosen && connectionCount < minConnections) {
+      nodesToRemove.push(node)
+    }
+  })
+
+  nodesToRemove.forEach((node) => graph.dropNode(node))
 }
 
 function addMediaToGraph(
@@ -302,21 +326,7 @@ export function MediaGraph({
       )
     })
 
-    // Filter out nodes that do not have enough connections.
-    if (minConnections !== undefined && minConnections > 0) {
-      const nodesToRemove: string[] = []
-      graph.forEachNode((node) => {
-        const nodeId = parseInt(node, 10)
-        const isUserChosen = loadedIds.has(nodeId)
-        const connectionCount = ratingCount.get(node) || 0
-
-        if (!isUserChosen && connectionCount < minConnections) {
-          nodesToRemove.push(node)
-        }
-      })
-
-      nodesToRemove.forEach((node) => graph.dropNode(node))
-    }
+    applyMinimumConnectionsFilter(graph, ratingCount, loadedIds, minConnections)
 
     // Calculate maxRating only from recommendation nodes, exclude user chosen nodes
     // because they will probably be the highest value by far and skew the scaling.
@@ -473,22 +483,18 @@ export function MediaGraph({
     let left = position.x + offset
     let top = position.y + offset
 
-    // Adjust horizontal position if tooltip would go off screen
     if (left + tooltipWidth > window.innerWidth) {
       left = position.x - tooltipWidth - offset
     }
 
-    // Adjust vertical position if tooltip would go off screen
     if (top + tooltipHeight > window.innerHeight) {
       top = position.y - tooltipHeight - offset
     }
 
-    // Ensure tooltip doesn't go off the left edge
     if (left < 0) {
       left = offset
     }
 
-    // Ensure tooltip doesn't go off the top edge
     if (top < 0) {
       top = offset
     }
