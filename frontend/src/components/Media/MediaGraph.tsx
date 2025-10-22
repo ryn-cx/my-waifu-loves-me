@@ -32,6 +32,8 @@ interface MediaGraphProps {
   useLinearScaling?: boolean
   minConnections?: number
   colorEdgesByTag?: boolean
+  minStartYear?: number
+  maxStartYear?: number
 }
 
 const STATUS_COLORS: Record<MediaListStatus, string> = {
@@ -156,6 +158,8 @@ function addRecomendationsToGraph(
   statusFilter: Set<MediaListStatus>,
   hideNotOnList: boolean,
   colorEdgesByTag: boolean,
+  minStartYear?: number,
+  maxStartYear?: number,
 ) {
   const recommendations = media.recommendations?.nodes || []
   recommendations.forEach((rec) => {
@@ -173,6 +177,17 @@ function addRecomendationsToGraph(
     // Skip recommendations not on list if hideNotOnList is enabled
     if (hideNotOnList && !recStatus) {
       return
+    }
+
+    // Skip recommendations outside the start year range
+    const startYear = recMedia.startDate?.year
+    if (startYear !== undefined && startYear !== null) {
+      if (minStartYear !== undefined && startYear < minStartYear) {
+        return
+      }
+      if (maxStartYear !== undefined && startYear > maxStartYear) {
+        return
+      }
     }
 
     const recNodeColor = recStatus ? STATUS_COLORS[recStatus] : NEW_NODE_COLOR
@@ -274,6 +289,8 @@ export function MediaGraph({
   useLinearScaling = false,
   minConnections,
   colorEdgesByTag = false,
+  minStartYear,
+  maxStartYear,
 }: MediaGraphProps) {
   const containerRef = useRef<HTMLDivElement>(null)
   const sigmaRef = useRef<Sigma | null>(null)
@@ -323,6 +340,8 @@ export function MediaGraph({
         statusFilter,
         hideNotOnList,
         colorEdgesByTag,
+        minStartYear,
+        maxStartYear,
       )
     })
 
@@ -468,6 +487,8 @@ export function MediaGraph({
     useLinearScaling,
     minConnections,
     colorEdgesByTag,
+    minStartYear,
+    maxStartYear,
   ])
 
   const renderTooltip = (

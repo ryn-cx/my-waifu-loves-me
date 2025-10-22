@@ -54,6 +54,8 @@ export const Route = createFileRoute("/_layout/")({
       useLinearScaling: parseBoolean(search.useLinearScaling),
       minConnections: parsePositiveNumber(search.minConnections),
       colorEdgesByTag: parseBoolean(search.colorEdgesByTag),
+      minStartYear: parsePositiveNumber(search.minStartYear),
+      maxStartYear: parsePositiveNumber(search.maxStartYear),
     }
   },
 })
@@ -69,6 +71,8 @@ function MediaPage() {
     useLinearScaling = false,
     minConnections,
     colorEdgesByTag = false,
+    minStartYear,
+    maxStartYear,
   } = Route.useSearch()
 
   const numericIds = useMemo(
@@ -124,44 +128,57 @@ function MediaPage() {
     newUseLinearScaling?: boolean
     newMinConnections?: number | null
     newColorEdgesByTag?: boolean
+    newMinStartYear?: number | null
+    newMaxStartYear?: number | null
   }) => {
     navigate({
-      search: (prev) => ({
-        ...prev,
-        ids: params.newIds !== undefined ? params.newIds : prev.ids,
-        user:
-          params.newUser !== undefined
-            ? params.newUser === null
-              ? undefined
-              : params.newUser
-            : prev.user,
-        usePopularityCompensation:
-          params.newUsePopularityCompensation !== undefined
-            ? params.newUsePopularityCompensation || undefined
-            : prev.usePopularityCompensation,
-        hideStatuses:
-          params.newHideStatuses !== undefined
-            ? params.newHideStatuses
-            : prev.hideStatuses,
-        hideNotOnList:
-          params.newHideNotOnList !== undefined
-            ? params.newHideNotOnList || undefined
-            : prev.hideNotOnList,
-        useLinearScaling:
-          params.newUseLinearScaling !== undefined
-            ? params.newUseLinearScaling || undefined
-            : prev.useLinearScaling,
-        minConnections:
-          params.newMinConnections !== undefined
-            ? params.newMinConnections === null
-              ? undefined
-              : params.newMinConnections
-            : prev.minConnections,
-        colorEdgesByTag:
-          params.newColorEdgesByTag !== undefined
-            ? params.newColorEdgesByTag || undefined
-            : prev.colorEdgesByTag,
-      }),
+      search: (prev) => {
+        const getValue = <T,>(newValue: T | undefined, oldValue: T): T => {
+          return newValue !== undefined ? newValue : oldValue
+        }
+
+        const getOptionalValue = <T,>(
+          newValue: T | null | undefined,
+          oldValue: T | undefined,
+        ): T | undefined => {
+          if (newValue === undefined) return oldValue
+          return newValue === null ? undefined : newValue
+        }
+
+        const getBooleanValue = (
+          newValue: boolean | undefined,
+          oldValue: boolean | undefined,
+        ): boolean | undefined => {
+          if (newValue === undefined) return oldValue
+          return newValue || undefined
+        }
+
+        return {
+          ...prev,
+          ids: getValue(params.newIds, prev.ids),
+          user: getOptionalValue(params.newUser, prev.user),
+          usePopularityCompensation: getBooleanValue(
+            params.newUsePopularityCompensation,
+            prev.usePopularityCompensation,
+          ),
+          hideStatuses: getValue(params.newHideStatuses, prev.hideStatuses),
+          hideNotOnList: getBooleanValue(params.newHideNotOnList, prev.hideNotOnList),
+          useLinearScaling: getBooleanValue(
+            params.newUseLinearScaling,
+            prev.useLinearScaling,
+          ),
+          minConnections: getOptionalValue(
+            params.newMinConnections,
+            prev.minConnections,
+          ),
+          colorEdgesByTag: getBooleanValue(
+            params.newColorEdgesByTag,
+            prev.colorEdgesByTag,
+          ),
+          minStartYear: getOptionalValue(params.newMinStartYear, prev.minStartYear),
+          maxStartYear: getOptionalValue(params.newMaxStartYear, prev.maxStartYear),
+        }
+      },
       replace: true,
     })
   }
@@ -231,6 +248,8 @@ function MediaPage() {
             useLinearScaling={useLinearScaling}
             minConnections={minConnections}
             colorEdgesByTag={colorEdgesByTag}
+            minStartYear={minStartYear}
+            maxStartYear={maxStartYear}
           />
         </Box>
       ) : (

@@ -57,6 +57,8 @@ const SidebarItems = ({ onClose }: SidebarItemsProps) => {
   const useLinearScaling = searchParams?.useLinearScaling || false
   const minConnections = searchParams?.minConnections
   const colorEdgesByTag = searchParams?.colorEdgesByTag || false
+  const minStartYear = searchParams?.minStartYear
+  const maxStartYear = searchParams?.maxStartYear
 
   const mediaMutation = useMutation({
     mutationFn: async (id: number) => {
@@ -200,6 +202,8 @@ const SidebarItems = ({ onClose }: SidebarItemsProps) => {
                   useLinearScaling: undefined,
                   minConnections: undefined,
                   colorEdgesByTag: undefined,
+                  minStartYear: undefined,
+                  maxStartYear: undefined,
                 },
               })
               onClose?.()
@@ -444,6 +448,56 @@ const SidebarItems = ({ onClose }: SidebarItemsProps) => {
                   search: (prev: any) => ({
                     ...prev,
                     minConnections:
+                      numValue === null || Number.isNaN(numValue)
+                        ? undefined
+                        : numValue,
+                  }),
+                  replace: false,
+                })
+              }}
+              placeholder="No limit"
+              size="sm"
+            />
+          </Field>
+
+          <Field label="Min Release Year">
+            <Input
+              type="number"
+              min="0"
+              value={minStartYear ?? ""}
+              onChange={(e) => {
+                const value = e.target.value
+                const numValue = value === "" ? null : parseInt(value, 10)
+                navigate({
+                  to: "/",
+                  search: (prev: any) => ({
+                    ...prev,
+                    minStartYear:
+                      numValue === null || Number.isNaN(numValue)
+                        ? undefined
+                        : numValue,
+                  }),
+                  replace: false,
+                })
+              }}
+              placeholder="No limit"
+              size="sm"
+            />
+          </Field>
+
+          <Field label="Max Release Year">
+            <Input
+              type="number"
+              min="0"
+              value={maxStartYear ?? ""}
+              onChange={(e) => {
+                const value = e.target.value
+                const numValue = value === "" ? null : parseInt(value, 10)
+                navigate({
+                  to: "/",
+                  search: (prev: any) => ({
+                    ...prev,
+                    maxStartYear:
                       numValue === null || Number.isNaN(numValue)
                         ? undefined
                         : numValue,
