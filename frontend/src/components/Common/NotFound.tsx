@@ -42,6 +42,8 @@ const NotFound = () => {
             useLinearScaling: undefined,
             minConnections: undefined,
             colorEdgesByTag: undefined,
+            minStartYear: undefined,
+            maxStartYear: undefined,
           }}
         >
           <Button variant="solid" colorScheme="teal" mt={4} alignSelf="center">
