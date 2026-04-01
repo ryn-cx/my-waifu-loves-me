@@ -238,3 +238,161 @@ export type UtilsTestEmailData = {
 export type UtilsTestEmailResponse = (Message);
 
 export type UtilsHealthCheckResponse = (boolean);
+
+// Media types (matching backend Pydantic schemas)
+
+export type MediaListStatus = 'COMPLETED' | 'CURRENT' | 'DROPPED' | 'PAUSED' | 'PLANNING' | 'REPEATING';
+
+export type MediaList = {
+    mediaId: number;
+};
+
+export type MediaListGroup = {
+    entries?: Array<(MediaList | null)> | null;
+    status?: MediaListStatus | null;
+};
+
+export type MediaListCollection = {
+    lists?: Array<(MediaListGroup | null)> | null;
+};
+
+export type FuzzyDate = {
+    day?: number | null;
+    month?: number | null;
+    year?: number | null;
+};
+
+export type MediaTitle = {
+    english?: string | null;
+    native?: string | null;
+    romaji?: string | null;
+};
+
+export type MediaCoverImage = {
+    color?: string | null;
+    extraLarge?: string | null;
+    large?: string | null;
+    medium?: string | null;
+};
+
+export type MediaExternalLink = {
+    id: number;
+    url?: string | null;
+    site: string;
+    type?: string | null;
+};
+
+export type MediaTag = {
+    id: number;
+    name: string;
+    rank?: number | null;
+    category?: string | null;
+    description?: string | null;
+    isAdult?: boolean | null;
+    isGeneralSpoiler?: boolean | null;
+    isMediaSpoiler?: boolean | null;
+};
+
+export type MediaTrailer = {
+    id?: string | null;
+    site?: string | null;
+    thumbnail?: string | null;
+};
+
+export type Studio = {
+    id: number;
+    name: string;
+    isAnimationStudio: boolean;
+};
+
+export type StudioConnection = {
+    nodes?: Array<(Studio | null)> | null;
+};
+
+export type Recommendation = {
+    id: number;
+    mediaRecommendation?: app__media__graphql_media_schema__Media | null;
+    rating?: number | null;
+};
+
+export type RecommendationConnection = {
+    nodes?: Array<(Recommendation | null)> | null;
+};
+
+export type app__media__graphql_media_schema__Media = {
+    id: number;
+    title?: MediaTitle | null;
+    averageScore?: number | null;
+    bannerImage?: string | null;
+    chapters?: number | null;
+    coverImage?: MediaCoverImage | null;
+    description?: string | null;
+    duration?: number | null;
+    endDate?: FuzzyDate | null;
+    episodes?: number | null;
+    externalLinks?: Array<(MediaExternalLink | null)> | null;
+    favourites?: number | null;
+    format?: string | null;
+    genres?: Array<(string | null)> | null;
+    idMal?: number | null;
+    isAdult?: boolean | null;
+    isLicensed?: boolean | null;
+    meanScore?: number | null;
+    popularity?: number | null;
+    rankings?: Array<unknown> | null;
+    recommendations?: RecommendationConnection | null;
+    season?: string | null;
+    seasonYear?: number | null;
+    siteUrl?: string | null;
+    source?: string | null;
+    startDate?: FuzzyDate | null;
+    status?: string | null;
+    studios?: StudioConnection | null;
+    synonyms?: Array<(string | null)> | null;
+    tags?: Array<(MediaTag | null)> | null;
+    trailer?: MediaTrailer | null;
+    type?: string | null;
+    countryOfOrigin?: string | null;
+    volumes?: number | null;
+};
+
+export type SearchMediaItem = {
+    id: number;
+    title?: MediaTitle | null;
+    coverImage?: { medium?: string | null; large?: string | null } | null;
+    type?: string | null;
+    format?: string | null;
+    status?: string | null;
+    averageScore?: number | null;
+    startDate?: FuzzyDate | null;
+};
+
+export type SearchPage = {
+    pageInfo?: {
+        total?: number | null;
+        currentPage?: number | null;
+        lastPage?: number | null;
+        hasNextPage?: boolean | null;
+        perPage?: number | null;
+    } | null;
+    media?: Array<(SearchMediaItem | null)> | null;
+};
+
+export type MediaReadMediaData = {
+    mediaId: number;
+};
+
+export type MediaReadMediaResponse = (app__media__graphql_media_schema__Media);
+
+export type MediaReadUserData = {
+    userName: string;
+};
+
+export type MediaReadUserResponse = (MediaListCollection);
+
+export type MediaSearchMediaData = {
+    searchQuery: string;
+    mediaType: string;
+};
+
+export type MediaSearchMediaResponse = (SearchPage);
