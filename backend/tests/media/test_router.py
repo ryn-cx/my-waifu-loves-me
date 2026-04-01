@@ -5,18 +5,26 @@ from fastapi.testclient import TestClient
 from sqlmodel import Session
 
 from app.config import settings
-from app.media.models import MediaFile, SearchFile, UserFile
-
+from app.media.models import MediaFile, UserFile
 
 MOCK_MEDIA_RESPONSE = {
     "data": {
         "Media": {
             "id": 1,
-            "title": {"romaji": "Cowboy Bebop", "english": "Cowboy Bebop", "native": "カウボーイビバップ"},
+            "title": {
+                "romaji": "Cowboy Bebop",
+                "english": "Cowboy Bebop",
+                "native": "カウボーイビバップ",
+            },
             "averageScore": 86,
             "bannerImage": None,
             "chapters": None,
-            "coverImage": {"extraLarge": None, "large": None, "medium": None, "color": None},
+            "coverImage": {
+                "extraLarge": None,
+                "large": None,
+                "medium": None,
+                "color": None,
+            },
             "description": "A space bounty hunter crew.",
             "duration": 24,
             "endDate": {"year": 1999, "month": 4, "day": 24},
@@ -32,7 +40,16 @@ MOCK_MEDIA_RESPONSE = {
             "seasonYear": 1998,
             "startDate": {"year": 1998, "month": 4, "day": 3},
             "volumes": None,
-            "studios": {"nodes": [{"name": "Sunrise", "id": 14, "isAnimationStudio": True}], "pageInfo": {"total": 1, "perPage": 25, "currentPage": 1, "lastPage": 1, "hasNextPage": False}},
+            "studios": {
+                "nodes": [{"name": "Sunrise", "id": 14, "isAnimationStudio": True}],
+                "pageInfo": {
+                    "total": 1,
+                    "perPage": 25,
+                    "currentPage": 1,
+                    "lastPage": 1,
+                    "hasNextPage": False,
+                },
+            },
             "type": "ANIME",
             "source": "ORIGINAL",
             "trailer": None,
@@ -45,50 +62,70 @@ MOCK_MEDIA_RESPONSE = {
             "status": "FINISHED",
             "externalLinks": [],
             "isLicensed": True,
-            "recommendations": {"nodes": [
-                {
-                    "id": 100,
-                    "rating": 50,
-                    "mediaRecommendation": {
-                        "id": 5,
-                        "title": {"romaji": "Cowboy Bebop: Tengoku no Tobira", "english": "Cowboy Bebop: Knockin' on Heaven's Door", "native": None},
-                        "averageScore": 82,
-                        "bannerImage": None,
-                        "chapters": None,
-                        "coverImage": {"extraLarge": None, "large": None, "medium": None, "color": None},
-                        "description": "A movie sequel.",
-                        "duration": 115,
-                        "endDate": {"year": 2001, "month": 9, "day": 1},
-                        "episodes": 1,
-                        "favourites": 5000,
-                        "format": "MOVIE",
-                        "genres": ["Action", "Drama", "Sci-Fi"],
-                        "isAdult": False,
-                        "meanScore": 82,
-                        "popularity": 80000,
-                        "rankings": [],
-                        "season": None,
-                        "seasonYear": None,
-                        "startDate": {"year": 2001, "month": 9, "day": 1},
-                        "volumes": None,
-                        "studios": {"nodes": [], "pageInfo": {"total": 0, "perPage": 25, "currentPage": 1, "lastPage": 1, "hasNextPage": False}},
-                        "type": "ANIME",
-                        "source": "ORIGINAL",
-                        "trailer": None,
-                        "countryOfOrigin": "JP",
-                        "idMal": 5,
-                        "siteUrl": "https://anilist.co/anime/5",
-                        "synonyms": [],
-                        "tags": [],
-                        "updatedAt": 1700000000,
-                        "status": "FINISHED",
-                        "externalLinks": [],
-                        "isLicensed": True,
+            "recommendations": {
+                "nodes": [
+                    {
+                        "id": 100,
+                        "rating": 50,
+                        "mediaRecommendation": {
+                            "id": 5,
+                            "title": {
+                                "romaji": "Cowboy Bebop: Tengoku no Tobira",
+                                "english": "Cowboy Bebop: Knockin' on Heaven's Door",
+                                "native": None,
+                            },
+                            "averageScore": 82,
+                            "bannerImage": None,
+                            "chapters": None,
+                            "coverImage": {
+                                "extraLarge": None,
+                                "large": None,
+                                "medium": None,
+                                "color": None,
+                            },
+                            "description": "A movie sequel.",
+                            "duration": 115,
+                            "endDate": {"year": 2001, "month": 9, "day": 1},
+                            "episodes": 1,
+                            "favourites": 5000,
+                            "format": "MOVIE",
+                            "genres": ["Action", "Drama", "Sci-Fi"],
+                            "isAdult": False,
+                            "meanScore": 82,
+                            "popularity": 80000,
+                            "rankings": [],
+                            "season": None,
+                            "seasonYear": None,
+                            "startDate": {"year": 2001, "month": 9, "day": 1},
+                            "volumes": None,
+                            "studios": {
+                                "nodes": [],
+                                "pageInfo": {
+                                    "total": 0,
+                                    "perPage": 25,
+                                    "currentPage": 1,
+                                    "lastPage": 1,
+                                    "hasNextPage": False,
+                                },
+                            },
+                            "type": "ANIME",
+                            "source": "ORIGINAL",
+                            "trailer": None,
+                            "countryOfOrigin": "JP",
+                            "idMal": 5,
+                            "siteUrl": "https://anilist.co/anime/5",
+                            "synonyms": [],
+                            "tags": [],
+                            "updatedAt": 1700000000,
+                            "status": "FINISHED",
+                            "externalLinks": [],
+                            "isLicensed": True,
+                        },
                     },
-                }
-            ]},
-        }
-    }
+                ],
+            },
+        },
+    },
 }
 
 MOCK_USER_RESPONSE_ANIME = {
@@ -103,9 +140,9 @@ MOCK_USER_RESPONSE_ANIME = {
                     "entries": [{"mediaId": 20}],
                     "status": "PLANNING",
                 },
-            ]
-        }
-    }
+            ],
+        },
+    },
 }
 
 MOCK_USER_RESPONSE_MANGA = {
@@ -116,9 +153,9 @@ MOCK_USER_RESPONSE_MANGA = {
                     "entries": [{"mediaId": 100}],
                     "status": "CURRENT",
                 },
-            ]
-        }
-    }
+            ],
+        },
+    },
 }
 
 MOCK_SEARCH_RESPONSE = {
@@ -134,29 +171,33 @@ MOCK_SEARCH_RESPONSE = {
             "media": [
                 {
                     "id": 1,
-                    "title": {"romaji": "Cowboy Bebop", "english": "Cowboy Bebop", "native": None},
+                    "title": {
+                        "romaji": "Cowboy Bebop",
+                        "english": "Cowboy Bebop",
+                        "native": None,
+                    },
                     "coverImage": {"medium": None, "large": None},
                     "type": "ANIME",
                     "format": "TV",
                     "status": "FINISHED",
                     "averageScore": 86,
                     "startDate": {"year": 1998, "month": 4, "day": 3},
-                }
+                },
             ],
-        }
-    }
+        },
+    },
 }
 
 
 @patch("app.media.router.graphql_request")
 def test_read_media(
     mock_graphql: object,
-    client: TestClient,
-    db: Session,
+    session_scoped_client: TestClient,
+    session_scoped_db: Session,
 ) -> None:
     mock_graphql.return_value = MOCK_MEDIA_RESPONSE  # type: ignore[attr-defined]
 
-    response = client.get(f"{settings.API_V1_STR}/media/1")
+    response = session_scoped_client.get(f"{settings.API_V1_STR}/media/1")
     assert response.status_code == status.HTTP_200_OK
     content = response.json()
     assert content["id"] == 1
@@ -169,24 +210,24 @@ def test_read_media(
 @patch("app.media.router.graphql_request")
 def test_read_media_caches_response(
     mock_graphql: object,
-    client: TestClient,
-    db: Session,
+    session_scoped_client: TestClient,
+    session_scoped_db: Session,
 ) -> None:
     mock_graphql.return_value = MOCK_MEDIA_RESPONSE  # type: ignore[attr-defined]
 
     # First call should hit the API
-    response1 = client.get(f"{settings.API_V1_STR}/media/999")
+    response1 = session_scoped_client.get(f"{settings.API_V1_STR}/media/999")
     assert response1.status_code == status.HTTP_200_OK
 
     # Second call should use the cache
-    response2 = client.get(f"{settings.API_V1_STR}/media/999")
+    response2 = session_scoped_client.get(f"{settings.API_V1_STR}/media/999")
     assert response2.status_code == status.HTTP_200_OK
 
     # graphql_request should only be called once
     assert mock_graphql.call_count == 1  # type: ignore[attr-defined]
 
     # Verify it was stored in the database
-    media_file = db.get(MediaFile, 999)
+    media_file = session_scoped_db.get(MediaFile, 999)
     assert media_file is not None
     assert media_file.content is not None
 
@@ -194,12 +235,12 @@ def test_read_media_caches_response(
 @patch("app.media.router.graphql_request")
 def test_read_user(
     mock_graphql: object,
-    client: TestClient,
-    db: Session,
+    session_scoped_client: TestClient,
+    session_scoped_db: Session,
 ) -> None:
     mock_graphql.side_effect = [MOCK_USER_RESPONSE_ANIME, MOCK_USER_RESPONSE_MANGA]  # type: ignore[attr-defined]
 
-    response = client.get(f"{settings.API_V1_STR}/media/user/testuser")
+    response = session_scoped_client.get(f"{settings.API_V1_STR}/user/testuser")
     assert response.status_code == status.HTTP_200_OK
     content = response.json()
     assert content["lists"] is not None
@@ -210,37 +251,37 @@ def test_read_user(
 @patch("app.media.router.graphql_request")
 def test_read_user_caches_response(
     mock_graphql: object,
-    client: TestClient,
-    db: Session,
+    session_scoped_client: TestClient,
+    session_scoped_db: Session,
 ) -> None:
     mock_graphql.side_effect = [MOCK_USER_RESPONSE_ANIME, MOCK_USER_RESPONSE_MANGA]  # type: ignore[attr-defined]
 
-    response1 = client.get(f"{settings.API_V1_STR}/media/user/cacheuser")
+    response1 = session_scoped_client.get(f"{settings.API_V1_STR}/user/cacheuser")
     assert response1.status_code == status.HTTP_200_OK
 
-    response2 = client.get(f"{settings.API_V1_STR}/media/user/cacheuser")
+    response2 = session_scoped_client.get(f"{settings.API_V1_STR}/user/cacheuser")
     assert response2.status_code == status.HTTP_200_OK
 
     # Should only call graphql twice (once for anime, once for manga) on first request
     assert mock_graphql.call_count == 2  # type: ignore[attr-defined]
 
-    user_file = db.get(UserFile, "cacheuser")
+    user_file = session_scoped_db.get(UserFile, "cacheuser")
     assert user_file is not None
 
 
 @patch("app.media.router.graphql_request")
 def test_read_user_case_insensitive(
     mock_graphql: object,
-    client: TestClient,
-    db: Session,
+    session_scoped_client: TestClient,
+    session_scoped_db: Session,
 ) -> None:
     mock_graphql.side_effect = [MOCK_USER_RESPONSE_ANIME, MOCK_USER_RESPONSE_MANGA]  # type: ignore[attr-defined]
 
-    response1 = client.get(f"{settings.API_V1_STR}/media/user/CaseUser")
+    response1 = session_scoped_client.get(f"{settings.API_V1_STR}/user/CaseUser")
     assert response1.status_code == status.HTTP_200_OK
 
     # Same user, different case - should use cache
-    response2 = client.get(f"{settings.API_V1_STR}/media/user/caseuser")
+    response2 = session_scoped_client.get(f"{settings.API_V1_STR}/user/caseuser")
     assert response2.status_code == status.HTTP_200_OK
 
     assert mock_graphql.call_count == 2  # type: ignore[attr-defined]
@@ -249,13 +290,13 @@ def test_read_user_case_insensitive(
 @patch("app.media.router.graphql_request")
 def test_search_media(
     mock_graphql: object,
-    client: TestClient,
-    db: Session,
+    session_scoped_client: TestClient,
+    session_scoped_db: Session,
 ) -> None:
     mock_graphql.return_value = MOCK_SEARCH_RESPONSE  # type: ignore[attr-defined]
 
-    response = client.get(
-        f"{settings.API_V1_STR}/media/search/cowboy",
+    response = session_scoped_client.get(
+        f"{settings.API_V1_STR}/search/cowboy",
         params={"media_type": "ANIME"},
     )
     assert response.status_code == status.HTTP_200_OK
@@ -268,19 +309,19 @@ def test_search_media(
 @patch("app.media.router.graphql_request")
 def test_search_media_caches_response(
     mock_graphql: object,
-    client: TestClient,
-    db: Session,
+    session_scoped_client: TestClient,
+    session_scoped_db: Session,
 ) -> None:
     mock_graphql.return_value = MOCK_SEARCH_RESPONSE  # type: ignore[attr-defined]
 
-    response1 = client.get(
-        f"{settings.API_V1_STR}/media/search/bebop",
+    response1 = session_scoped_client.get(
+        f"{settings.API_V1_STR}/search/bebop",
         params={"media_type": "ANIME"},
     )
     assert response1.status_code == status.HTTP_200_OK
 
-    response2 = client.get(
-        f"{settings.API_V1_STR}/media/search/bebop",
+    response2 = session_scoped_client.get(
+        f"{settings.API_V1_STR}/search/bebop",
         params={"media_type": "ANIME"},
     )
     assert response2.status_code == status.HTTP_200_OK
@@ -289,10 +330,10 @@ def test_search_media_caches_response(
 
 
 def test_search_media_invalid_type(
-    client: TestClient,
+    session_scoped_client: TestClient,
 ) -> None:
-    response = client.get(
-        f"{settings.API_V1_STR}/media/search/test",
+    response = session_scoped_client.get(
+        f"{settings.API_V1_STR}/search/test",
         params={"media_type": "INVALID"},
     )
     assert response.status_code == status.HTTP_400_BAD_REQUEST
@@ -302,9 +343,9 @@ def test_search_media_invalid_type(
 @patch("app.media.router.graphql_request")
 def test_read_media_graphql_error(
     mock_graphql: object,
-    client: TestClient,
+    session_scoped_client: TestClient,
 ) -> None:
     mock_graphql.side_effect = ValueError("GraphQL errors occurred")  # type: ignore[attr-defined]
 
-    response = client.get(f"{settings.API_V1_STR}/media/99999")
+    response = session_scoped_client.get(f"{settings.API_V1_STR}/media/99999")
     assert response.status_code == status.HTTP_500_INTERNAL_SERVER_ERROR

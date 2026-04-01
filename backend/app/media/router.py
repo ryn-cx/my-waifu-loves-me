@@ -1,6 +1,6 @@
 import json
 import logging
-from datetime import datetime, timezone
+from datetime import timedelta
 from typing import Any
 
 import httpx
@@ -13,8 +13,9 @@ from app.media.graphql_search_schema import SearchPage
 from app.media.graphql_user_schema import MediaListCollection
 from app.media.models import MediaFile, SearchFile, UserFile
 from app.media.queries import MEDIA_QUERY, SEARCH_QUERY, USER_QUERY
+from app.utils import tz_datetime
 
-router = APIRouter(prefix="/media", tags=["media"])
+router = APIRouter(tags=["media"])
 
 
 logger = logging.getLogger(__name__)
@@ -43,11 +44,14 @@ def graphql_request(query: str, variables: dict[str, int | str]) -> dict[str, An
     return output
 
 
-def _utcnow() -> datetime:
-    return datetime.now(timezone.utc)
+MAX_CACHE_AGE = timedelta(days=30)
 
 
-@router.get("/{media_id}")
+def _is_outdated(data_timestamp: tz_datetime.datetime | None) -> bool:
+    return data_timestamp is None or tz_datetime.now() - data_timestamp > MAX_CACHE_AGE
+
+
+@router.get("/media/{media_id}")
 def read_media(session: SessionDep, media_id: int) -> Media:
     """
     Retrieve media.
@@ -56,22 +60,32 @@ def read_media(session: SessionDep, media_id: int) -> Media:
     statement = select(MediaFile).where(MediaFile.id == media_id)
     media_file = session.exec(statement).first()
 
-    if not media_file:
-        graphql_data = graphql_request(MEDIA_QUERY, {"mediaId": media_id})
+    if not media_file or _is_outdated(media_file.data_timestamp):
+        try:
+            graphql_data = graphql_request(MEDIA_QUERY, {"mediaId": media_id})
+        except ValueError as e:
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=str(e),
+            ) from e
 
-        media_file = MediaFile(
-            id=media_id,
-            content=json.dumps(graphql_data["data"]["Media"]),
-            data_timestamp=_utcnow(),
-        )
-        session.add(media_file)
+        if media_file:
+            media_file.content = json.dumps(graphql_data["data"]["Media"])
+            media_file.data_timestamp = tz_datetime.now()
+        else:
+            media_file = MediaFile(
+                id=media_id,
+                content=json.dumps(graphql_data["data"]["Media"]),
+                data_timestamp=tz_datetime.now(),
+            )
+            session.add(media_file)
         session.commit()
         session.refresh(media_file)
 
     return Media.model_validate_json(media_file.content)
 
 
-@router.get("/user/{user_name}")
+@router.get("/user/{user_name}", tags=["user"])
 def read_user(session: SessionDep, user_name: str) -> MediaListCollection:
     """
     Retrieve user's media list.
@@ -80,41 +94,47 @@ def read_user(session: SessionDep, user_name: str) -> MediaListCollection:
     statement = select(UserFile).where(UserFile.id == user_name.lower())
     user_file = session.exec(statement).first()
 
-    if not user_file:
+    if not user_file or _is_outdated(user_file.data_timestamp):
         raw_anime = graphql_request(
-            USER_QUERY, {"userName": user_name, "type": "ANIME"}
+            USER_QUERY,
+            {"userName": user_name, "type": "ANIME"},
         )
         raw_manga = graphql_request(
-            USER_QUERY, {"userName": user_name, "type": "MANGA"}
+            USER_QUERY,
+            {"userName": user_name, "type": "MANGA"},
         )
 
         anime_data = MediaListCollection.model_validate(
-            raw_anime["data"]["MediaListCollection"]
+            raw_anime["data"]["MediaListCollection"],
         )
         manga_data = MediaListCollection.model_validate(
-            raw_manga["data"]["MediaListCollection"]
+            raw_manga["data"]["MediaListCollection"],
         )
 
         combined_data = MediaListCollection(
             lists=[
                 *(anime_data.lists or []),
                 *(manga_data.lists or []),
-            ]
+            ],
         )
 
-        user_file = UserFile(
-            id=user_name.lower(),
-            content=combined_data.model_dump_json(by_alias=True),
-            data_timestamp=_utcnow(),
-        )
-        session.add(user_file)
+        if user_file:
+            user_file.content = combined_data.model_dump_json(by_alias=True)
+            user_file.data_timestamp = tz_datetime.now()
+        else:
+            user_file = UserFile(
+                id=user_name.lower(),
+                content=combined_data.model_dump_json(by_alias=True),
+                data_timestamp=tz_datetime.now(),
+            )
+            session.add(user_file)
         session.commit()
         session.refresh(user_file)
 
     return MediaListCollection.model_validate_json(user_file.content)
 
 
-@router.get("/search/{search_query}")
+@router.get("/search/{search_query}", tags=["search"])
 def search_media(
     session: SessionDep,
     search_query: str,
@@ -132,7 +152,7 @@ def search_media(
     statement = select(SearchFile).where(SearchFile.search_query == cache_key)
     search_file = session.exec(statement).first()
 
-    if not search_file:
+    if not search_file or _is_outdated(search_file.data_timestamp):
         variables: dict[str, Any] = {
             "search": search_query,
             "page": 1,
@@ -142,12 +162,16 @@ def search_media(
 
         graphql_data = graphql_request(SEARCH_QUERY, variables)
 
-        search_file = SearchFile(
-            search_query=cache_key,
-            content=json.dumps(graphql_data["data"]["Page"]),
-            data_timestamp=_utcnow(),
-        )
-        session.add(search_file)
+        if search_file:
+            search_file.content = json.dumps(graphql_data["data"]["Page"])
+            search_file.data_timestamp = tz_datetime.now()
+        else:
+            search_file = SearchFile(
+                search_query=cache_key,
+                content=json.dumps(graphql_data["data"]["Page"]),
+                data_timestamp=tz_datetime.now(),
+            )
+            session.add(search_file)
         session.commit()
         session.refresh(search_file)
 

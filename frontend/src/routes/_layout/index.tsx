@@ -124,9 +124,7 @@ function MediaPage() {
       mediaQueries
         .map((query) => query.data)
         .filter(
-          (
-            data,
-          ): data is app__media__graphql_media_schema__Media =>
+          (data): data is app__media__graphql_media_schema__Media =>
             data !== undefined,
         ),
     [mediaQueries],
@@ -137,69 +135,81 @@ function MediaPage() {
     [mediaItems],
   )
 
-  const updateUrl = useCallback((params: {
-    newIds?: string[]
-    newUser?: string | null
-    newUsePopularityCompensation?: boolean
-    newHideStatuses?: string[]
-    newHideNotOnList?: boolean
-    newUseLinearScaling?: boolean
-    newMinConnections?: number | null
-    newColorEdgesByTag?: boolean
-    newMinStartYear?: number | null
-    newMaxStartYear?: number | null
-  }) => {
-    navigate({
-      search: (prev) => {
-        const getValue = <T,>(newValue: T | undefined, oldValue: T): T => {
-          return newValue !== undefined ? newValue : oldValue
-        }
+  const updateUrl = useCallback(
+    (params: {
+      newIds?: string[]
+      newUser?: string | null
+      newUsePopularityCompensation?: boolean
+      newHideStatuses?: string[]
+      newHideNotOnList?: boolean
+      newUseLinearScaling?: boolean
+      newMinConnections?: number | null
+      newColorEdgesByTag?: boolean
+      newMinStartYear?: number | null
+      newMaxStartYear?: number | null
+    }) => {
+      navigate({
+        search: (prev) => {
+          const getValue = <T,>(newValue: T | undefined, oldValue: T): T => {
+            return newValue !== undefined ? newValue : oldValue
+          }
 
-        const getOptionalValue = <T,>(
-          newValue: T | null | undefined,
-          oldValue: T | undefined,
-        ): T | undefined => {
-          if (newValue === undefined) return oldValue
-          return newValue === null ? undefined : newValue
-        }
+          const getOptionalValue = <T,>(
+            newValue: T | null | undefined,
+            oldValue: T | undefined,
+          ): T | undefined => {
+            if (newValue === undefined) return oldValue
+            return newValue === null ? undefined : newValue
+          }
 
-        const getBooleanValue = (
-          newValue: boolean | undefined,
-          oldValue: boolean | undefined,
-        ): boolean | undefined => {
-          if (newValue === undefined) return oldValue
-          return newValue || undefined
-        }
+          const getBooleanValue = (
+            newValue: boolean | undefined,
+            oldValue: boolean | undefined,
+          ): boolean | undefined => {
+            if (newValue === undefined) return oldValue
+            return newValue || undefined
+          }
 
-        return {
-          ...prev,
-          ids: getValue(params.newIds, prev.ids),
-          user: getOptionalValue(params.newUser, prev.user),
-          usePopularityCompensation: getBooleanValue(
-            params.newUsePopularityCompensation,
-            prev.usePopularityCompensation,
-          ),
-          hideStatuses: getValue(params.newHideStatuses, prev.hideStatuses),
-          hideNotOnList: getBooleanValue(params.newHideNotOnList, prev.hideNotOnList),
-          useLinearScaling: getBooleanValue(
-            params.newUseLinearScaling,
-            prev.useLinearScaling,
-          ),
-          minConnections: getOptionalValue(
-            params.newMinConnections,
-            prev.minConnections,
-          ),
-          colorEdgesByTag: getBooleanValue(
-            params.newColorEdgesByTag,
-            prev.colorEdgesByTag,
-          ),
-          minStartYear: getOptionalValue(params.newMinStartYear, prev.minStartYear),
-          maxStartYear: getOptionalValue(params.newMaxStartYear, prev.maxStartYear),
-        }
-      },
-      replace: true,
-    })
-  }, [navigate])
+          return {
+            ...prev,
+            ids: getValue(params.newIds, prev.ids),
+            user: getOptionalValue(params.newUser, prev.user),
+            usePopularityCompensation: getBooleanValue(
+              params.newUsePopularityCompensation,
+              prev.usePopularityCompensation,
+            ),
+            hideStatuses: getValue(params.newHideStatuses, prev.hideStatuses),
+            hideNotOnList: getBooleanValue(
+              params.newHideNotOnList,
+              prev.hideNotOnList,
+            ),
+            useLinearScaling: getBooleanValue(
+              params.newUseLinearScaling,
+              prev.useLinearScaling,
+            ),
+            minConnections: getOptionalValue(
+              params.newMinConnections,
+              prev.minConnections,
+            ),
+            colorEdgesByTag: getBooleanValue(
+              params.newColorEdgesByTag,
+              prev.colorEdgesByTag,
+            ),
+            minStartYear: getOptionalValue(
+              params.newMinStartYear,
+              prev.minStartYear,
+            ),
+            maxStartYear: getOptionalValue(
+              params.newMaxStartYear,
+              prev.maxStartYear,
+            ),
+          }
+        },
+        replace: true,
+      })
+    },
+    [navigate],
+  )
 
   const addMediaMutation = useMutation({
     mutationFn: async (id: number) => {

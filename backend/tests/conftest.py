@@ -1,89 +1,179 @@
+# TODO: Validate
+from __future__ import annotations
+
 from collections.abc import Generator
 
 import pytest
 from fastapi.testclient import TestClient
 from pydantic_core import MultiHostUrl
-from sqlalchemy import text
-from sqlmodel import Session, create_engine
+from sqlalchemy import Connection, Engine
+from sqlmodel import Session, SQLModel, create_engine, text
 
+# reportUnusedImport/F401 - This loads variables into the environment even if it looks
+# like it does nothing. It's easier to do this on import than import it then have a
+# function call in the middle of all of the imports.
 from app.auth.dependencies import get_db
 from app.config import settings
-from app.database import init_db
+from app.database import init_db, load_models
 from app.main import app
-from tests.utils.user import authentication_token_from_email
+from tests.users.utils import (
+    authentication_token_from_email,
+)
 from tests.utils.utils import get_superuser_token_headers
 
-TEST_POSTGRES_DB = settings.POSTGRES_DB + "_test"
 
-TEST_DATABASE_URI = MultiHostUrl.build(
-    scheme="postgresql+psycopg",
-    username=settings.POSTGRES_USER,
-    password=settings.POSTGRES_PASSWORD,
-    host=settings.POSTGRES_SERVER,
-    port=settings.POSTGRES_PORT,
-    path=TEST_POSTGRES_DB,
-)
+def create_test_engine(db_suffix: str) -> Engine:
+    """Create a test database with the given suffix and return its engine."""
+    db_name = f"{settings.POSTGRES_DB}_test_{db_suffix}"
 
-test_engine = create_engine(str(TEST_DATABASE_URI))
+    postgres_engine = create_engine(str(settings.SQLALCHEMY_DATABASE_URI))
+    with postgres_engine.connect().execution_options(
+        isolation_level="AUTOCOMMIT",
+    ) as conn:
+        exists = conn.execute(
+            text("SELECT 1 FROM pg_database WHERE datname = :db_name"),
+            {"db_name": db_name},
+        ).scalar()
+        if not exists:
+            conn.execute(text(f'CREATE DATABASE "{db_name}"'))
+    postgres_engine.dispose()
 
-
-ADMIN_DATABASE_URI = MultiHostUrl.build(
-    scheme="postgresql+psycopg",
-    username=settings.POSTGRES_USER,
-    password=settings.POSTGRES_PASSWORD,
-    host=settings.POSTGRES_SERVER,
-    port=settings.POSTGRES_PORT,
-    path="postgres",
-)
-
-admin_engine = create_engine(str(ADMIN_DATABASE_URI))
-
-
-def create_test_database() -> None:
-    """Create the test database by copying the existing database."""
-    # AUTOCOMMIT is required to drop a database
-    with admin_engine.connect().execution_options(isolation_level="AUTOCOMMIT") as conn:
-        conn.execute(text(f'DROP DATABASE IF EXISTS "{TEST_POSTGRES_DB}"'))
-        conn.execute(
-            text(
-                f'CREATE DATABASE "{TEST_POSTGRES_DB}" WITH TEMPLATE "{settings.POSTGRES_DB}"',
-            ),
-        )
+    uri = MultiHostUrl.build(
+        scheme="postgresql+psycopg",
+        username=settings.POSTGRES_USER,
+        password=settings.POSTGRES_PASSWORD,
+        host=settings.POSTGRES_SERVER,
+        port=settings.POSTGRES_PORT,
+        path=db_name,
+    )
+    return create_engine(str(uri))
 
 
+def reset_tables(engine: Engine) -> None:
+    """Drop and recreate all tables on the given engine."""
+    SQLModel.metadata.drop_all(engine)
+    SQLModel.metadata.create_all(engine)
+
+
+test_engine = create_test_engine("default")
+
+
+# For every test session create a single database
 @pytest.fixture(scope="session", autouse=True)
-def db() -> Generator[Session]:
-    create_test_database()
-    with Session(test_engine) as session:
+def create_test_database() -> None:
+    """Load models and create all tables in the default test database."""
+    load_models()
+    reset_tables(test_engine)
+
+
+def savepoint_session(connection: Connection) -> Generator[Session]:
+    """Create a savepoint session that rolls back after use."""
+    transaction = connection.begin()
+    session = Session(bind=connection, join_transaction_mode="create_savepoint")
+    yield session
+    session.close()
+    transaction.rollback()
+
+
+def _init_connection() -> Generator[Connection]:
+    """Create a connection and initialize the database."""
+    connection = test_engine.connect()
+    with Session(bind=connection) as session:
         init_db(session)
-        yield session
-    with admin_engine.connect().execution_options(isolation_level="AUTOCOMMIT") as conn:
-        conn.execute(text(f'DROP DATABASE IF EXISTS "{TEST_POSTGRES_DB}"'))
+    yield connection
+    connection.close()
 
 
-def get_test_db() -> Generator[Session]:
-    """Database dependency override for testing."""
-    with Session(test_engine) as session:
-        yield session
+@pytest.fixture
+def function_scoped_connection() -> Generator[Connection]:
+    yield from _init_connection()
+
+
+@pytest.fixture(scope="class")
+def class_scoped_connection() -> Generator[Connection]:
+    yield from _init_connection()
 
 
 @pytest.fixture(scope="module")
-def client() -> Generator[TestClient]:
-    app.dependency_overrides[get_db] = get_test_db
+def module_scoped_connection() -> Generator[Connection]:
+    yield from _init_connection()
+
+
+@pytest.fixture(scope="session")
+def session_scoped_connection() -> Generator[Connection]:
+    yield from _init_connection()
+
+
+@pytest.fixture
+def function_scoped_db(function_scoped_connection: Connection) -> Generator[Session]:
+    """Function-scoped database with per-test savepoint isolation."""
+    yield from savepoint_session(function_scoped_connection)
+
+
+@pytest.fixture
+def class_scoped_db(class_scoped_connection: Connection) -> Generator[Session]:
+    """Class-scoped database with per-test savepoint isolation."""
+    yield from savepoint_session(class_scoped_connection)
+
+
+@pytest.fixture
+def module_scoped_db(module_scoped_connection: Connection) -> Generator[Session]:
+    """Module-scoped database with per-test savepoint isolation."""
+    yield from savepoint_session(module_scoped_connection)
+
+
+@pytest.fixture
+def session_scoped_db(session_scoped_connection: Connection) -> Generator[Session]:
+    """Session-scoped database with per-test savepoint isolation."""
+    yield from savepoint_session(session_scoped_connection)
+
+
+def _create_client(db: Session) -> Generator[TestClient]:
+    """Provide a test client that shares the given database session."""
+    app.dependency_overrides[get_db] = lambda: db
     with TestClient(app) as c:
         yield c
     app.dependency_overrides.clear()
 
 
-@pytest.fixture(scope="module")
-def superuser_token_headers(client: TestClient) -> dict[str, str]:
-    return get_superuser_token_headers(client)
+@pytest.fixture
+def function_scoped_client(function_scoped_db: Session) -> Generator[TestClient]:
+    """Provide a test client using a function-scoped database session."""
+    yield from _create_client(function_scoped_db)
 
 
-@pytest.fixture(scope="module")
-def normal_user_token_headers(client: TestClient, db: Session) -> dict[str, str]:
+@pytest.fixture
+def class_scoped_client(class_scoped_db: Session) -> Generator[TestClient]:
+    """Provide a test client using a class-scoped database session."""
+    yield from _create_client(class_scoped_db)
+
+
+@pytest.fixture
+def module_scoped_client(module_scoped_db: Session) -> Generator[TestClient]:
+    """Provide a test client using a module-scoped database session."""
+    yield from _create_client(module_scoped_db)
+
+
+@pytest.fixture
+def session_scoped_client(session_scoped_db: Session) -> Generator[TestClient]:
+    """Provide a test client using a session-scoped database session."""
+    yield from _create_client(session_scoped_db)
+
+
+@pytest.fixture
+def superuser_token_headers(session_scoped_client: TestClient) -> dict[str, str]:
+    """Provide authentication headers for the superuser."""
+    return get_superuser_token_headers(session_scoped_client)
+
+
+@pytest.fixture
+def normal_user_token_headers(
+    session_scoped_client: TestClient,
+    session_scoped_db: Session,
+) -> dict[str, str]:
+    """Provide authentication headers for a normal test user."""
     return authentication_token_from_email(
-        client=client,
+        client=session_scoped_client,
         email=settings.EMAIL_TEST_USER,
-        db=db,
+        db=session_scoped_db,
     )

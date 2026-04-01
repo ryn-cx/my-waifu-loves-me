@@ -176,7 +176,9 @@ export function MediaSidebarItems() {
       {/* Username Input */}
       <form onSubmit={handleUserSubmit} className="flex flex-col gap-3">
         <div className="flex flex-col gap-1.5">
-          <Label htmlFor="anilist-user" className="text-sm">AniList Username</Label>
+          <Label htmlFor="anilist-user" className="text-sm">
+            AniList Username
+          </Label>
           <Input
             id="anilist-user"
             value={userName}
@@ -196,7 +198,9 @@ export function MediaSidebarItems() {
       {useSearchMode ? (
         <form onSubmit={handleSearchSubmit} className="flex flex-col gap-3">
           <div className="flex flex-col gap-1.5">
-            <Label htmlFor="search-query" className="text-sm">Search Anime/Manga</Label>
+            <Label htmlFor="search-query" className="text-sm">
+              Search Anime/Manga
+            </Label>
             <Input
               id="search-query"
               value={searchQuery}
@@ -251,7 +255,9 @@ export function MediaSidebarItems() {
       ) : (
         <form onSubmit={handleMediaSubmit} className="flex flex-col gap-3">
           <div className="flex flex-col gap-1.5">
-            <Label htmlFor="media-id" className="text-sm">Add by ID</Label>
+            <Label htmlFor="media-id" className="text-sm">
+              Add by ID
+            </Label>
             <Input
               id="media-id"
               value={mediaId}
@@ -307,9 +313,7 @@ export function MediaSidebarItems() {
                         {item.title?.romaji ||
                           item.title?.english ||
                           item.title?.native}{" "}
-                        {item.startDate?.year
-                          ? `(${item.startDate.year})`
-                          : ""}
+                        {item.startDate?.year ? `(${item.startDate.year})` : ""}
                       </p>
                       <div className="flex gap-1 text-xs text-muted-foreground">
                         {item.type && <span>{item.type}</span>}
@@ -336,8 +340,7 @@ export function MediaSidebarItems() {
                 to: "/",
                 search: (prev: any) => ({
                   ...prev,
-                  usePopularityCompensation:
-                    checked === true || undefined,
+                  usePopularityCompensation: checked === true || undefined,
                 }),
                 replace: false,
               })
@@ -389,7 +392,9 @@ export function MediaSidebarItems() {
         </div>
 
         <div className="flex flex-col gap-1.5">
-          <Label htmlFor="min-connections" className="text-sm">Minimum Connections</Label>
+          <Label htmlFor="min-connections" className="text-sm">
+            Minimum Connections
+          </Label>
           <Input
             id="min-connections"
             type="number"
@@ -415,7 +420,9 @@ export function MediaSidebarItems() {
         </div>
 
         <div className="flex flex-col gap-1.5">
-          <Label htmlFor="min-year" className="text-sm">Min Release Year</Label>
+          <Label htmlFor="min-year" className="text-sm">
+            Min Release Year
+          </Label>
           <Input
             id="min-year"
             type="number"
@@ -441,7 +448,9 @@ export function MediaSidebarItems() {
         </div>
 
         <div className="flex flex-col gap-1.5">
-          <Label htmlFor="max-year" className="text-sm">Max Release Year</Label>
+          <Label htmlFor="max-year" className="text-sm">
+            Max Release Year
+          </Label>
           <Input
             id="max-year"
             type="number"
@@ -487,7 +496,10 @@ export function MediaSidebarItems() {
                   })
                 }}
               />
-              <Label htmlFor="hide-not-on-list" className="flex items-center gap-1 text-xs">
+              <Label
+                htmlFor="hide-not-on-list"
+                className="flex items-center gap-1 text-xs"
+              >
                 <span
                   className="inline-block h-2 w-2 rounded-full"
                   style={{ backgroundColor: "#aaaaaa" }}
@@ -534,7 +546,10 @@ export function MediaSidebarItems() {
                       })
                     }}
                   />
-                  <Label htmlFor={`status-${status}`} className="flex items-center gap-1 text-xs">
+                  <Label
+                    htmlFor={`status-${status}`}
+                    className="flex items-center gap-1 text-xs"
+                  >
                     <span
                       className="inline-block h-2 w-2 rounded-full"
                       style={{ backgroundColor: STATUS_COLORS[status] }}

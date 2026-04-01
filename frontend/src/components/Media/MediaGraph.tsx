@@ -77,7 +77,10 @@ function calculateEdgeSize(
   usePopularityCompensation: boolean,
 ) {
   if (usePopularityCompensation) {
-    return Math.max(1, (rating / (sourcePopularity * recPopularity)) * edgeScaleFactor)
+    return Math.max(
+      1,
+      (rating / (sourcePopularity * recPopularity)) * edgeScaleFactor,
+    )
   }
   return Math.max(1, rating * edgeScaleFactor)
 }
@@ -140,16 +143,19 @@ function addMediaToGraph(
 
 // Based on https://stackoverflow.com/questions/7616461/generate-a-hash-from-string-in-javascript
 const generateColor = (string: string) => {
-  let hash = 0;
+  let hash = 0
   for (const char of string) {
-    hash = (hash << 5) - hash + char.charCodeAt(0);
-    hash |= 0;
+    hash = (hash << 5) - hash + char.charCodeAt(0)
+    hash |= 0
   }
   const hexHash = Math.abs(hash).toString(16)
   return `#${hexHash.slice(0, 6)}`
-};
+}
 
-function getBestTag(media: app__media__graphql_media_schema__Media, recMedia: app__media__graphql_media_schema__Media) {
+function getBestTag(
+  media: app__media__graphql_media_schema__Media,
+  recMedia: app__media__graphql_media_schema__Media,
+) {
   let bestTag = ""
   let highestScore = 0
 
@@ -510,7 +516,9 @@ export function MediaGraph({
     return (
       <div
         className={`fixed z-[9999] max-w-[350px] rounded-md border bg-background p-3 shadow-lg ${
-          isPinned ? "border-blue-400 pointer-events-auto" : "border-border pointer-events-none"
+          isPinned
+            ? "border-blue-400 pointer-events-auto"
+            : "border-border pointer-events-none"
         }`}
         style={{ left: `${left}px`, top: `${top}px` }}
         onClick={(e) => e.stopPropagation()}
@@ -640,10 +648,7 @@ export function MediaGraph({
 
   return (
     <div className="relative h-full">
-      <div
-        ref={containerRef}
-        className="h-full w-full rounded-md border"
-      />
+      <div ref={containerRef} className="h-full w-full rounded-md border" />
 
       {createPortal(
         <>

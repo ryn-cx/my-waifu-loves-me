@@ -6,8 +6,11 @@ from app.config import settings
 from app.users.models import User
 
 
-def test_create_user(client: TestClient, db: Session) -> None:
-    r = client.post(
+def test_create_user(
+    session_scoped_client: TestClient,
+    session_scoped_db: Session,
+) -> None:
+    r = session_scoped_client.post(
         f"{settings.API_V1_STR}/private/users/",
         json={
             "email": "pollo@listo.com",
@@ -20,7 +23,7 @@ def test_create_user(client: TestClient, db: Session) -> None:
 
     data = r.json()
 
-    user = db.exec(select(User).where(User.id == data["id"])).first()
+    user = session_scoped_db.exec(select(User).where(User.id == data["id"])).first()
 
     assert user
     assert user.email == "pollo@listo.com"
