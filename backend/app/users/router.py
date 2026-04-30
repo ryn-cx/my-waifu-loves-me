@@ -42,8 +42,9 @@ def read_users(session: SessionDep, skip: int = 0, limit: int = 100) -> UsersPub
     )
     users = session.exec(statement).all()
 
-    # reportArgumentType - Arguements are automatically converted.
-    return UsersPublic(data=users, count=count)  # pyright: ignore[reportArgumentType]
+
+    users_public = [UserPublic.model_validate(user) for user in users]
+    return UsersPublic(data=users_public, count=count)
 
 
 @router.post(

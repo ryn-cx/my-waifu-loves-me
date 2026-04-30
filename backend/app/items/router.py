@@ -50,8 +50,8 @@ def read_items(
         )
         items = session.exec(statement).all()
 
-    # reportArgumentType - Arguements are automatically converted.
-    return ItemsPublic(data=items, count=count)  # pyright: ignore[reportArgumentType]
+    items_public = [ItemPublic.model_validate(item) for item in items]
+    return ItemsPublic(data=items_public, count=count)
 
 
 @router.get("/{item_id}", response_model=ItemPublic)
