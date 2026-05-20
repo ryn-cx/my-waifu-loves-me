@@ -26,7 +26,11 @@ if (hash.includes("access_token")) {
 OpenAPI.BASE = import.meta.env.VITE_API_URL
 OpenAPI.HEADERS = async () => {
   const anilistToken = localStorage.getItem("anilist_token")
-  return anilistToken ? { "X-Anilist-Token": anilistToken } : {}
+  const headers: Record<string, string> = {}
+  if (anilistToken) {
+    headers["X-Anilist-Token"] = anilistToken
+  }
+  return headers
 }
 
 const queryClient = new QueryClient()
