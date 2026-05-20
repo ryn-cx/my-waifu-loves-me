@@ -219,6 +219,7 @@ export class MediaService {
      * Retrieve media.
      * @param data The data for the request.
      * @param data.mediaId
+     * @param data.xAnilistToken
      * @returns app__media__graphql_media_schema__Media Successful Response
      * @throws ApiError
      */
@@ -228,6 +229,9 @@ export class MediaService {
             url: '/api/v1/media/{media_id}',
             path: {
                 media_id: data.mediaId
+            },
+            headers: {
+                'X-Anilist-Token': data.xAnilistToken
             },
             errors: {
                 422: 'Validation Error'
@@ -240,6 +244,7 @@ export class MediaService {
      * Retrieve user's media list.
      * @param data The data for the request.
      * @param data.userName
+     * @param data.xAnilistToken
      * @returns MediaListCollection Successful Response
      * @throws ApiError
      */
@@ -249,6 +254,9 @@ export class MediaService {
             url: '/api/v1/user/{user_name}',
             path: {
                 user_name: data.userName
+            },
+            headers: {
+                'X-Anilist-Token': data.xAnilistToken
             },
             errors: {
                 422: 'Validation Error'
@@ -263,6 +271,7 @@ export class MediaService {
      * @param data The data for the request.
      * @param data.searchQuery
      * @param data.mediaType
+     * @param data.xAnilistToken
      * @returns SearchPage Successful Response
      * @throws ApiError
      */
@@ -272,6 +281,9 @@ export class MediaService {
             url: '/api/v1/search/{search_query}',
             path: {
                 search_query: data.searchQuery
+            },
+            headers: {
+                'X-Anilist-Token': data.xAnilistToken
             },
             query: {
                 media_type: data.mediaType
@@ -313,6 +325,7 @@ export class SearchService {
      * @param data The data for the request.
      * @param data.searchQuery
      * @param data.mediaType
+     * @param data.xAnilistToken
      * @returns SearchPage Successful Response
      * @throws ApiError
      */
@@ -322,6 +335,9 @@ export class SearchService {
             url: '/api/v1/search/{search_query}',
             path: {
                 search_query: data.searchQuery
+            },
+            headers: {
+                'X-Anilist-Token': data.xAnilistToken
             },
             query: {
                 media_type: data.mediaType
@@ -339,6 +355,7 @@ export class UserService {
      * Retrieve user's media list.
      * @param data The data for the request.
      * @param data.userName
+     * @param data.xAnilistToken
      * @returns MediaListCollection Successful Response
      * @throws ApiError
      */
@@ -348,6 +365,9 @@ export class UserService {
             url: '/api/v1/user/{user_name}',
             path: {
                 user_name: data.userName
+            },
+            headers: {
+                'X-Anilist-Token': data.xAnilistToken
             },
             errors: {
                 422: 'Validation Error'

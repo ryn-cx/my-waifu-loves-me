@@ -16,10 +16,8 @@ function Layout() {
   return (
     <SidebarProvider>
       <AppSidebar />
+      <SidebarTrigger className="fixed top-2 left-2 z-50 bg-background/80 backdrop-blur-sm shadow-sm transition-[left] duration-200 ease-linear peer-data-[state=expanded]:left-[calc(var(--sidebar-width)+0.5rem)]" />
       <SidebarInset>
-        <header className="sticky top-0 z-10 flex h-16 shrink-0 items-center gap-2 border-b px-4">
-          <SidebarTrigger className="-ml-1 text-muted-foreground" />
-        </header>
         <main className="flex-1 p-4 md:p-6">
           <Outlet />
         </main>

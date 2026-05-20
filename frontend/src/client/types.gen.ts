@@ -2258,12 +2258,14 @@ export type LoginRecoverPasswordHtmlContentResponse = (string);
 
 export type MediaReadMediaData = {
     mediaId: number;
+    xAnilistToken?: (string | null);
 };
 
 export type MediaReadMediaResponse = (app__media__graphql_media_schema__Media);
 
 export type MediaReadUserData = {
     userName: string;
+    xAnilistToken?: (string | null);
 };
 
 export type MediaReadUserResponse = (MediaListCollection);
@@ -2271,6 +2273,7 @@ export type MediaReadUserResponse = (MediaListCollection);
 export type MediaSearchMediaData = {
     mediaType: string;
     searchQuery: string;
+    xAnilistToken?: (string | null);
 };
 
 export type MediaSearchMediaResponse = (SearchPage);

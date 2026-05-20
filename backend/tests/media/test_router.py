@@ -197,7 +197,9 @@ def test_read_media(
 ) -> None:
     mock_graphql.return_value = MOCK_MEDIA_RESPONSE  # type: ignore[attr-defined]
 
-    response = session_scoped_client.get(f"{settings.API_V1_STR}/media/1")
+    response = session_scoped_client.get(
+        f"{settings.API_V1_STR}/media/1",
+    )
     assert response.status_code == status.HTTP_200_OK
     content = response.json()
     assert content["id"] == 1
@@ -216,11 +218,15 @@ def test_read_media_caches_response(
     mock_graphql.return_value = MOCK_MEDIA_RESPONSE  # type: ignore[attr-defined]
 
     # First call should hit the API
-    response1 = session_scoped_client.get(f"{settings.API_V1_STR}/media/999")
+    response1 = session_scoped_client.get(
+        f"{settings.API_V1_STR}/media/999",
+    )
     assert response1.status_code == status.HTTP_200_OK
 
     # Second call should use the cache
-    response2 = session_scoped_client.get(f"{settings.API_V1_STR}/media/999")
+    response2 = session_scoped_client.get(
+        f"{settings.API_V1_STR}/media/999",
+    )
     assert response2.status_code == status.HTTP_200_OK
 
     # graphql_request should only be called once
@@ -240,7 +246,9 @@ def test_read_user(
 ) -> None:
     mock_graphql.side_effect = [MOCK_USER_RESPONSE_ANIME, MOCK_USER_RESPONSE_MANGA]  # type: ignore[attr-defined]
 
-    response = session_scoped_client.get(f"{settings.API_V1_STR}/user/testuser")
+    response = session_scoped_client.get(
+        f"{settings.API_V1_STR}/user/testuser",
+    )
     assert response.status_code == status.HTTP_200_OK
     content = response.json()
     assert content["lists"] is not None
@@ -256,10 +264,14 @@ def test_read_user_caches_response(
 ) -> None:
     mock_graphql.side_effect = [MOCK_USER_RESPONSE_ANIME, MOCK_USER_RESPONSE_MANGA]  # type: ignore[attr-defined]
 
-    response1 = session_scoped_client.get(f"{settings.API_V1_STR}/user/cacheuser")
+    response1 = session_scoped_client.get(
+        f"{settings.API_V1_STR}/user/cacheuser",
+    )
     assert response1.status_code == status.HTTP_200_OK
 
-    response2 = session_scoped_client.get(f"{settings.API_V1_STR}/user/cacheuser")
+    response2 = session_scoped_client.get(
+        f"{settings.API_V1_STR}/user/cacheuser",
+    )
     assert response2.status_code == status.HTTP_200_OK
 
     # Should only call graphql twice (once for anime, once for manga) on first request
@@ -277,11 +289,15 @@ def test_read_user_case_insensitive(
 ) -> None:
     mock_graphql.side_effect = [MOCK_USER_RESPONSE_ANIME, MOCK_USER_RESPONSE_MANGA]  # type: ignore[attr-defined]
 
-    response1 = session_scoped_client.get(f"{settings.API_V1_STR}/user/CaseUser")
+    response1 = session_scoped_client.get(
+        f"{settings.API_V1_STR}/user/CaseUser",
+    )
     assert response1.status_code == status.HTTP_200_OK
 
     # Same user, different case - should use cache
-    response2 = session_scoped_client.get(f"{settings.API_V1_STR}/user/caseuser")
+    response2 = session_scoped_client.get(
+        f"{settings.API_V1_STR}/user/caseuser",
+    )
     assert response2.status_code == status.HTTP_200_OK
 
     assert mock_graphql.call_count == 2  # type: ignore[attr-defined]
@@ -347,5 +363,7 @@ def test_read_media_graphql_error(
 ) -> None:
     mock_graphql.side_effect = ValueError("GraphQL errors occurred")  # type: ignore[attr-defined]
 
-    response = session_scoped_client.get(f"{settings.API_V1_STR}/media/99999")
+    response = session_scoped_client.get(
+        f"{settings.API_V1_STR}/media/99999",
+    )
     assert response.status_code == status.HTTP_500_INTERNAL_SERVER_ERROR

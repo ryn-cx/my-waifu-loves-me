@@ -4,9 +4,17 @@ import { useState } from "react"
 import { toast } from "sonner"
 
 import type { MediaListStatus } from "@/client"
-import { MediaService } from "@/client"
+import { ApiError, MediaService } from "@/client"
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Separator } from "@/components/ui/separator"
@@ -20,6 +28,9 @@ const STATUS_COLORS: Record<MediaListStatus, string> = {
   REPEATING: "#38b2ac",
 }
 
+const ANILIST_CLIENT_ID = import.meta.env.VITE_ANILIST_CLIENT_ID
+const ANILIST_AUTH_URL = `https://anilist.co/api/v2/oauth/authorize?client_id=${ANILIST_CLIENT_ID}&response_type=token`
+
 export function MediaSidebarItems() {
   const navigate = useNavigate()
   const searchParams = useSearch({ from: "/_layout/" })
@@ -28,6 +39,7 @@ export function MediaSidebarItems() {
   const [searchQuery, setSearchQuery] = useState("")
   const [mediaType, setMediaType] = useState<"ANIME" | "MANGA">("ANIME")
   const [useSearchMode, setUseSearchMode] = useState(true)
+  const [showAnilistLogin, setShowAnilistLogin] = useState(false)
 
   const hideStatuses = searchParams?.hideStatuses || []
   const statusFilterArray = Array.isArray(hideStatuses)
@@ -79,8 +91,12 @@ export function MediaSidebarItems() {
       setUserName("")
       toast.success("User list loaded successfully")
     },
-    onError: () => {
-      toast.error("Failed to fetch user list")
+    onError: (error) => {
+      if (error instanceof ApiError && error.status === 403) {
+        setShowAnilistLogin(true)
+      } else {
+        toast.error("Failed to fetch user list")
+      }
     },
   })
 
@@ -143,36 +159,6 @@ export function MediaSidebarItems() {
 
   return (
     <div className="flex flex-col gap-4 p-4">
-      {/* Header with Reset */}
-      <div className="flex items-center justify-between">
-        <span className="text-xs font-bold">Menu</span>
-        <Button
-          size="sm"
-          variant="outline"
-          onClick={() => {
-            navigate({
-              to: "/",
-              search: {
-                ids: undefined,
-                user: undefined,
-                usePopularityCompensation: undefined,
-                hideStatuses: undefined,
-                hideNotOnList: undefined,
-                useLinearScaling: undefined,
-                minConnections: undefined,
-                colorEdgesByTag: undefined,
-                minStartYear: undefined,
-                maxStartYear: undefined,
-              },
-            })
-          }}
-        >
-          Reset
-        </Button>
-      </div>
-
-      <Separator />
-
       {/* Username Input */}
       <form onSubmit={handleUserSubmit} className="flex flex-col gap-3">
         <div className="flex flex-col gap-1.5">
@@ -562,6 +548,28 @@ export function MediaSidebarItems() {
           </div>
         </div>
       </div>
+
+      <Dialog open={showAnilistLogin} onOpenChange={setShowAnilistLogin}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Private List</DialogTitle>
+            <DialogDescription>
+              This user's list is private. Login with AniList to access it.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setShowAnilistLogin(false)}
+            >
+              Cancel
+            </Button>
+            <Button asChild>
+              <a href={ANILIST_AUTH_URL}>Login with AniList</a>
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

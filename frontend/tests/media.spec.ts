@@ -10,9 +10,6 @@ test("Dashboard shows empty state message", async ({ page }) => {
 test("Sidebar contains media graph controls", async ({ page }) => {
   await page.goto("/")
 
-  // Check that the Media Graph section exists in the sidebar
-  await expect(page.getByText("Media Graph")).toBeVisible()
-
   // Check AniList Username input
   await expect(page.getByLabel("AniList Username")).toBeVisible()
 

@@ -1,10 +1,10 @@
 import json
 import logging
 from datetime import timedelta
-from typing import Any
+from typing import Annotated, Any
 
 import httpx
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter, Header, HTTPException, status
 from sqlmodel import select
 
 from app.auth.dependencies import SessionDep
@@ -20,10 +20,21 @@ router = APIRouter(tags=["media"])
 
 logger = logging.getLogger(__name__)
 
+AnilistToken = Annotated[str | None, Header(alias="X-Anilist-Token")]
 
-def graphql_request(query: str, variables: dict[str, int | str]) -> dict[str, Any]:
+
+def graphql_request(
+    query: str,
+    variables: dict[str, int | str],
+    access_token: str | None = None,
+) -> dict[str, Any]:
+    headers: dict[str, str] = {}
+    if access_token:
+        headers["Authorization"] = f"Bearer {access_token}"
+
     response = httpx.post(
         "https://graphql.anilist.co",
+        headers=headers,
         json={
             "query": query,
             "variables": variables,
@@ -52,7 +63,11 @@ def _is_outdated(data_timestamp: tz_datetime.datetime | None) -> bool:
 
 
 @router.get("/media/{media_id}")
-def read_media(session: SessionDep, media_id: int) -> Media:
+def read_media(
+    session: SessionDep,
+    media_id: int,
+    anilist_token: AnilistToken = None,
+) -> Media:
     """
     Retrieve media.
     """
@@ -62,7 +77,11 @@ def read_media(session: SessionDep, media_id: int) -> Media:
 
     if not media_file or _is_outdated(media_file.data_timestamp):
         try:
-            graphql_data = graphql_request(MEDIA_QUERY, {"mediaId": media_id})
+            graphql_data = graphql_request(
+                MEDIA_QUERY,
+                {"mediaId": media_id},
+                anilist_token,
+            )
         except ValueError as e:
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -86,7 +105,11 @@ def read_media(session: SessionDep, media_id: int) -> Media:
 
 
 @router.get("/user/{user_name}", tags=["user"])
-def read_user(session: SessionDep, user_name: str) -> MediaListCollection:
+def read_user(
+    session: SessionDep,
+    user_name: str,
+    anilist_token: AnilistToken = None,
+) -> MediaListCollection:
     """
     Retrieve user's media list.
     """
@@ -95,14 +118,27 @@ def read_user(session: SessionDep, user_name: str) -> MediaListCollection:
     user_file = session.exec(statement).first()
 
     if not user_file or _is_outdated(user_file.data_timestamp):
-        raw_anime = graphql_request(
-            USER_QUERY,
-            {"userName": user_name, "type": "ANIME"},
-        )
-        raw_manga = graphql_request(
-            USER_QUERY,
-            {"userName": user_name, "type": "MANGA"},
-        )
+        try:
+            raw_anime = graphql_request(
+                USER_QUERY,
+                {"userName": user_name, "type": "ANIME"},
+                anilist_token,
+            )
+            raw_manga = graphql_request(
+                USER_QUERY,
+                {"userName": user_name, "type": "MANGA"},
+                anilist_token,
+            )
+        except ValueError as e:
+            if "Private" in str(e):
+                raise HTTPException(
+                    status_code=status.HTTP_403_FORBIDDEN,
+                    detail="User list is private. Login with AniList to access it.",
+                ) from e
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=str(e),
+            ) from e
 
         anime_data = MediaListCollection.model_validate(
             raw_anime["data"]["MediaListCollection"],
@@ -139,6 +175,7 @@ def search_media(
     session: SessionDep,
     search_query: str,
     media_type: str,
+    anilist_token: AnilistToken = None,
 ) -> SearchPage:
     """
     Search for media by title.
@@ -160,7 +197,7 @@ def search_media(
             "type": media_type,
         }
 
-        graphql_data = graphql_request(SEARCH_QUERY, variables)
+        graphql_data = graphql_request(SEARCH_QUERY, variables, anilist_token)
 
         if search_file:
             search_file.content = json.dumps(graphql_data["data"]["Page"])
