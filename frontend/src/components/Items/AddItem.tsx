@@ -5,6 +5,7 @@ import { useState } from "react"
 import { useForm } from "react-hook-form"
 import { z } from "zod"
 
+import type { ApiError, ItemsPublic } from "@/client"
 import { type ItemCreate, ItemsService } from "@/client"
 import { Button } from "@/components/ui/button"
 import {
@@ -55,12 +56,44 @@ const AddItem = () => {
   const mutation = useMutation({
     mutationFn: (data: ItemCreate) =>
       ItemsService.createItem({ requestBody: data }),
+    // When mutate is called:
+    onMutate: async (newItem) => {
+      // Cancel any outgoing refetches
+      // (so they don't overwrite our optimistic update)
+      await queryClient.cancelQueries({ queryKey: ["items"] })
+
+      // Snapshot the previous value
+      const previousItems = queryClient.getQueryData<ItemsPublic>(["items"])
+
+      // Optimistically update to the new value
+      queryClient.setQueryData<ItemsPublic>(["items"], (old) =>
+        old
+          ? {
+              ...old,
+              data: [
+                ...old.data,
+                { ...newItem, id: crypto.randomUUID(), owner_id: "" },
+              ],
+              count: old.count + 1,
+            }
+          : old,
+      )
+
+      // Return a result with the snapshotted value
+      return { previousItems }
+    },
     onSuccess: () => {
       showSuccessToast("Item created successfully")
       form.reset()
       setIsOpen(false)
     },
-    onError: handleError.bind(showErrorToast),
+    // If the mutation fails,
+    // use the result returned from onMutate to roll back
+    onError: (err, _newItem, context) => {
+      queryClient.setQueryData(["items"], context?.previousItems)
+      handleError.call(showErrorToast, err as ApiError)
+    },
+    // Always refetch after error or success:
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ["items"] })
     },

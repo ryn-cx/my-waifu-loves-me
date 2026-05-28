@@ -29,6 +29,7 @@
       pagination was chosen to be the default pagination implementation. The backend
       pagination code is retained, so if client-side pagination is inadequate,
       server-side pagination can be implemented with minimal changes to the frontend.
+- 🤞 Optimistic updates.
 
 ## Technology Stack and Features
 
