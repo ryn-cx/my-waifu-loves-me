@@ -20,6 +20,15 @@
 - 🧹 Stricter linter configurations.
 - 🏠 Set the default URL to be the root domain instead of the dashboard subdomain.
 - 📙 Changed Alembic to use timestamp based file names.
+- 📄 Client side pagination.
+    - In the original pagination implementation, the backend paginated results, but the
+      frontend had no way to access data after the first page. TanStack Table can [load
+      100,000 rows and still perform
+      well](https://tanstack.com/table/v8/docs/guide/pagination). Most projects using
+      this template are expected to have less than 100,000 rows, so client-side
+      pagination was chosen to be the default pagination implementation. The backend
+      pagination code is retained, so if client-side pagination is inadequate,
+      server-side pagination can be implemented with minimal changes to the frontend.
 
 ## Technology Stack and Features
 

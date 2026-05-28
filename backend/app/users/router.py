@@ -1,6 +1,7 @@
 import uuid
+from typing import Annotated
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlmodel import col, delete, func, select
 
 from app.auth.dependencies import (
@@ -29,7 +30,11 @@ router = APIRouter(prefix="/users", tags=["users"])
 
 
 @router.get("/", dependencies=[Depends(get_current_active_superuser)])
-def read_users(session: SessionDep, skip: int = 0, limit: int = 100) -> UsersPublic:
+def read_users(
+    session: SessionDep,
+    skip: Annotated[int, Query(ge=0)] = 0,
+    limit: Annotated[int, Query(ge=1)] = 100_000,
+) -> UsersPublic:
     """
     Retrieve users.
     """

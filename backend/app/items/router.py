@@ -1,6 +1,7 @@
 import uuid
+from typing import Annotated
 
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter, HTTPException, Query, status
 from sqlmodel import col, func, select
 
 from app.auth.dependencies import CurrentUser, SessionDep
@@ -20,8 +21,8 @@ router = APIRouter(prefix="/items", tags=["items"])
 def read_items(
     session: SessionDep,
     current_user: CurrentUser,
-    skip: int = 0,
-    limit: int = 100,
+    skip: Annotated[int, Query(ge=0)] = 0,
+    limit: Annotated[int, Query(ge=1)] = 100_000,
 ) -> ItemsPublic:
     """
     Retrieve items.
