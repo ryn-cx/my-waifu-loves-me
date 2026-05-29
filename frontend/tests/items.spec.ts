@@ -1,4 +1,5 @@
 import { expect, test } from "@playwright/test"
+import { showAllResults } from "./utils/dataTable"
 import { createUser } from "./utils/privateApi"
 import {
   randomEmail,
@@ -44,6 +45,7 @@ test.describe("Items management", () => {
     await page.getByRole("button", { name: "Save" }).click()
 
     await expect(page.getByText("Item created successfully")).toBeVisible()
+    await showAllResults(page)
     await expect(page.getByText(title)).toBeVisible()
   })
 
@@ -55,6 +57,7 @@ test.describe("Items management", () => {
     await page.getByRole("button", { name: "Save" }).click()
 
     await expect(page.getByText("Item created successfully")).toBeVisible()
+    await showAllResults(page)
     await expect(page.getByText(title)).toBeVisible()
   })
 
@@ -88,6 +91,7 @@ test.describe("Items management", () => {
     })
 
     test("Edit an item successfully", async ({ page }) => {
+      await showAllResults(page)
       const itemRow = page.getByRole("row").filter({ hasText: itemTitle })
       await itemRow.getByRole("button").last().click()
       await page.getByRole("menuitem", { name: "Edit Item" }).click()
@@ -101,6 +105,7 @@ test.describe("Items management", () => {
     })
 
     test("Delete an item successfully", async ({ page }) => {
+      await showAllResults(page)
       const itemRow = page.getByRole("row").filter({ hasText: itemTitle })
       await itemRow.getByRole("button").last().click()
       await page.getByRole("menuitem", { name: "Delete Item" }).click()
