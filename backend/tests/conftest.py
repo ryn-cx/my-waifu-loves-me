@@ -14,24 +14,15 @@ from app.main import app
 from tests.utils.user import authentication_token_from_email
 from tests.utils.utils import get_superuser_token_headers
 
-IS_CI = bool(os.environ.get("CI"))
-
-TEST_POSTGRES_DB = (
-    settings.POSTGRES_DB if IS_CI else settings.POSTGRES_DB + "_backend_test"
-)
-
+POSTGRES_BACKEND_TEST_DB = settings.POSTGRES_DB + "_backend_test"
 TEST_DATABASE_URI = MultiHostUrl.build(
     scheme="postgresql+psycopg",
     username=settings.POSTGRES_USER,
     password=settings.POSTGRES_PASSWORD,
     host=settings.POSTGRES_SERVER,
     port=settings.POSTGRES_PORT,
-    path=TEST_POSTGRES_DB,
+    path=POSTGRES_BACKEND_TEST_DB,
 )
-
-test_engine = create_engine(str(TEST_DATABASE_URI))
-
-
 ADMIN_DATABASE_URI = MultiHostUrl.build(
     scheme="postgresql+psycopg",
     username=settings.POSTGRES_USER,
@@ -41,6 +32,7 @@ ADMIN_DATABASE_URI = MultiHostUrl.build(
     path="postgres",
 )
 
+test_engine = create_engine(str(TEST_DATABASE_URI))
 admin_engine = create_engine(str(ADMIN_DATABASE_URI))
 
 
@@ -48,23 +40,16 @@ def create_test_database() -> None:
     """Create the test database by copying the existing database."""
     # AUTOCOMMIT is required to drop a database
     with admin_engine.connect().execution_options(isolation_level="AUTOCOMMIT") as conn:
-        conn.execute(text(f'DROP DATABASE IF EXISTS "{TEST_POSTGRES_DB}"'))
+        conn.execute(text(f'DROP DATABASE IF EXISTS "{POSTGRES_BACKEND_TEST_DB}"'))
         conn.execute(
             text(
-                f'CREATE DATABASE "{TEST_POSTGRES_DB}" WITH TEMPLATE "{settings.POSTGRES_DB}"',
+                f'CREATE DATABASE "{POSTGRES_BACKEND_TEST_DB}" WITH TEMPLATE "{settings.POSTGRES_DB}"',
             ),
         )
 
 
-@pytest.fixture(scope="session", autouse=True)
-def db() -> Generator[Session]:
-    if not IS_CI:
-        create_test_database()
-    with Session(test_engine) as session:
-        init_db(session)
-        yield session
-    if IS_CI:
-        return
+def drop_test_database() -> None:
+    """Drop the test database, terminating any lingering connections first."""
     test_engine.dispose()
     with admin_engine.connect().execution_options(isolation_level="AUTOCOMMIT") as conn:
         conn.execute(
@@ -72,9 +57,18 @@ def db() -> Generator[Session]:
                 "SELECT pg_terminate_backend(pid) FROM pg_stat_activity "
                 "WHERE datname = :db AND pid <> pg_backend_pid()",
             ),
-            {"db": TEST_POSTGRES_DB},
+            {"db": POSTGRES_BACKEND_TEST_DB},
         )
-        conn.execute(text(f'DROP DATABASE IF EXISTS "{TEST_POSTGRES_DB}"'))
+        conn.execute(text(f'DROP DATABASE IF EXISTS "{POSTGRES_BACKEND_TEST_DB}"'))
+
+
+@pytest.fixture(scope="session", autouse=True)
+def db() -> Generator[Session]:
+    create_test_database()
+    with Session(test_engine) as session:
+        init_db(session)
+        yield session
+    drop_test_database()
 
 
 def get_test_db() -> Generator[Session]:
