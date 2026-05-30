@@ -34,7 +34,7 @@
 
 ## Other Changes
 
-- Derive all port assignments from a configurable `PROJECT_NUMBER` so multiple
+- 🏗️ Derive all port assignments from a configurable `PROJECT_NUMBER` so multiple
   projects using this template can run side by side without port conflicts.
 
 # Full Stack FastAPI Template
