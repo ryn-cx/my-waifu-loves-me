@@ -7,7 +7,6 @@ from starlette.middleware.cors import CORSMiddleware
 
 from app.config import settings
 from app.constants import APP_PATH
-from tests import private
 
 
 def custom_generate_unique_id(route: APIRoute) -> str:
