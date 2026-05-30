@@ -13,9 +13,11 @@ BASE_PORTS = {
     "DB_PORT": 5432,
     "ADMINER_PORT": 8080,
     "BACKEND_PORT": 8000,
+    "BACKEND_TEST_PORT": 8100,
     "MAILCATCHER_WEB_PORT": 1080,
     "MAILCATCHER_SMTP_PORT": 1025,
     "FRONTEND_PORT": 5173,
+    "FRONTEND_TEST_PORT": 5273,
     "PLAYWRIGHT_PORT": 9323,
 }
 
@@ -42,9 +44,12 @@ def calculate_offset(project_number: int) -> int:
 
 
 def get_urls(ports: dict[str, int]) -> dict[str, str]:
+    # Host-side test tooling (playwright privateApi, mailcatcher reader) targets
+    # the test stack so frontend tests don't touch the dev `app` database.
     return {
-        "VITE_API_URL": f"http://localhost:{ports['BACKEND_PORT']}",
+        "VITE_API_URL": f"http://localhost:{ports['BACKEND_TEST_PORT']}",
         "MAILCATCHER_HOST": f"http://localhost:{ports['MAILCATCHER_WEB_PORT']}",
+        "FRONTEND_TEST_URL": f"http://localhost:{ports['FRONTEND_TEST_PORT']}",
     }
 
 
@@ -75,7 +80,12 @@ if __name__ == "__main__":
     root_block = render_block({**ports, **urls})
     upsert_block(ENV_PATH, root_block, set(ports) | set(urls))
 
-    frontend_block = render_block(urls)
+    # Vite (host `bun run dev`) needs VITE_API_URL pointing at the DEV backend.
+    frontend_urls = {
+        "VITE_API_URL": f"http://localhost:{ports['BACKEND_PORT']}",
+        "MAILCATCHER_HOST": f"http://localhost:{ports['MAILCATCHER_WEB_PORT']}",
+    }
+    frontend_block = render_block(frontend_urls)
     upsert_block(FRONTEND_ENV_PATH, frontend_block, set(urls))
 
     print(f"Wrote {ENV_PATH}:\n{root_block}\n")

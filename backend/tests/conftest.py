@@ -13,7 +13,7 @@ from app.main import app
 from tests.utils.user import authentication_token_from_email
 from tests.utils.utils import get_superuser_token_headers
 
-TEST_POSTGRES_DB = settings.POSTGRES_DB + "_test"
+TEST_POSTGRES_DB = settings.POSTGRES_DB + "_backend_test"
 
 TEST_DATABASE_URI = MultiHostUrl.build(
     scheme="postgresql+psycopg",
