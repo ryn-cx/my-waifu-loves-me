@@ -1,3 +1,4 @@
+import os
 from collections.abc import Generator
 
 import pytest
@@ -13,7 +14,11 @@ from app.main import app
 from tests.utils.user import authentication_token_from_email
 from tests.utils.utils import get_superuser_token_headers
 
-TEST_POSTGRES_DB = settings.POSTGRES_DB + "_backend_test"
+IS_CI = bool(os.environ.get("CI"))
+
+TEST_POSTGRES_DB = (
+    settings.POSTGRES_DB if IS_CI else settings.POSTGRES_DB + "_backend_test"
+)
 
 TEST_DATABASE_URI = MultiHostUrl.build(
     scheme="postgresql+psycopg",
@@ -53,11 +58,22 @@ def create_test_database() -> None:
 
 @pytest.fixture(scope="session", autouse=True)
 def db() -> Generator[Session]:
-    create_test_database()
+    if not IS_CI:
+        create_test_database()
     with Session(test_engine) as session:
         init_db(session)
         yield session
+    if IS_CI:
+        return
+    test_engine.dispose()
     with admin_engine.connect().execution_options(isolation_level="AUTOCOMMIT") as conn:
+        conn.execute(
+            text(
+                "SELECT pg_terminate_backend(pid) FROM pg_stat_activity "
+                "WHERE datname = :db AND pid <> pg_backend_pid()",
+            ),
+            {"db": TEST_POSTGRES_DB},
+        )
         conn.execute(text(f'DROP DATABASE IF EXISTS "{TEST_POSTGRES_DB}"'))
 
 
