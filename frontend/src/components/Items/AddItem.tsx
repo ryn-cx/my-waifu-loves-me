@@ -5,8 +5,9 @@ import { useState } from "react"
 import { useForm } from "react-hook-form"
 import { z } from "zod"
 
-import type { ApiError, ItemsPublic } from "@/client"
-import { type ItemCreate, ItemsService } from "@/client"
+import type { ApiError, ItemCreate } from "@/client"
+import { ItemsService } from "@/client"
+import type { ItemsPublicWithPending } from "@/components/Items/types"
 import { Button } from "@/components/ui/button"
 import {
   Dialog,
@@ -63,33 +64,50 @@ const AddItem = () => {
       await queryClient.cancelQueries({ queryKey: ["items"] })
 
       // Snapshot the previous value
-      const previousItems = queryClient.getQueryData<ItemsPublic>(["items"])
+      const previousItems = queryClient.getQueryData<ItemsPublicWithPending>([
+        "items",
+      ])
+
+      const pendingId = `${crypto.randomUUID()} (pending)`
 
       // Optimistically update to the new value
-      queryClient.setQueryData<ItemsPublic>(["items"], (old) =>
+      queryClient.setQueryData<ItemsPublicWithPending>(["items"], (old) =>
         old
           ? {
               ...old,
               data: [
                 ...old.data,
-                { ...newItem, id: crypto.randomUUID(), owner_id: "" },
+                {
+                  ...newItem,
+                  id: pendingId,
+                  owner_id: "",
+                  pending: true,
+                },
               ],
               count: old.count + 1,
             }
           : old,
       )
 
-      // Return a result with the snapshotted value
-      return { previousItems }
+      // Return a result with the snapshotted value (and the tracking id)
+      return { previousItems, pendingId }
     },
-    onSuccess: () => {
+    onSuccess: (data, _variables, context) => {
       showSuccessToast("Item created successfully")
-      form.reset()
-      setIsOpen(false)
+      queryClient.setQueryData<ItemsPublicWithPending>(["items"], (old) =>
+        old
+          ? {
+              ...old,
+              data: old.data.map((item) =>
+                item.id === context.pendingId ? data : item,
+              ),
+            }
+          : old,
+      )
     },
     // If the mutation fails,
     // use the result returned from onMutate to roll back
-    onError: (err, _newItem, context) => {
+    onError: (err, _variables, context) => {
       queryClient.setQueryData(["items"], context?.previousItems)
       handleError.call(showErrorToast, err as ApiError)
     },
@@ -100,6 +118,8 @@ const AddItem = () => {
   })
 
   const onSubmit = (data: FormData) => {
+    setIsOpen(false)
+    form.reset()
     mutation.mutate(data)
   }
 
@@ -159,13 +179,9 @@ const AddItem = () => {
 
             <DialogFooter>
               <DialogClose asChild>
-                <Button variant="outline" disabled={mutation.isPending}>
-                  Cancel
-                </Button>
+                <Button variant="outline">Cancel</Button>
               </DialogClose>
-              <LoadingButton type="submit" loading={mutation.isPending}>
-                Save
-              </LoadingButton>
+              <LoadingButton type="submit">Save</LoadingButton>
             </DialogFooter>
           </form>
         </Form>

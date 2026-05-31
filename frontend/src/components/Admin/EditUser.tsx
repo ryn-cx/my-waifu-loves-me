@@ -5,8 +5,9 @@ import { useState } from "react"
 import { useForm } from "react-hook-form"
 import { z } from "zod"
 
-import type { ApiError, UsersPublic } from "@/client"
+import type { ApiError } from "@/client"
 import { type UserPublic, UsersService } from "@/client"
+import type { UsersPublicWithPending } from "@/components/Admin/types"
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
 import {
@@ -75,29 +76,28 @@ const EditUser = ({ user, onSuccess }: EditUserProps) => {
   })
 
   const mutation = useMutation({
-    mutationFn: (data: FormData) =>
+    mutationFn: (data: Omit<FormData, "confirm_password">) =>
       UsersService.updateUser({ userId: user.id, requestBody: data }),
     // When mutate is called:
-    onMutate: async (newUser) => {
+    onMutate: async (data) => {
       // Cancel any outgoing refetches
       // (so they don't overwrite our optimistic update)
       await queryClient.cancelQueries({ queryKey: ["users"] })
 
       // Snapshot the previous value
-      const previousUsers = queryClient.getQueryData<UsersPublic>(["users"])
+      const previousUsers = queryClient.getQueryData<UsersPublicWithPending>([
+        "users",
+      ])
 
       // Optimistically update to the new value
-      const {
-        password: _password,
-        confirm_password: _confirm,
-        ...userData
-      } = newUser
-      queryClient.setQueryData<UsersPublic>(["users"], (old) =>
+      queryClient.setQueryData<UsersPublicWithPending>(["users"], (old) =>
         old
           ? {
               ...old,
-              data: old.data.map((u) =>
-                u.id === user.id ? { ...u, ...userData } : u,
+              data: old.data.map((existingUser) =>
+                existingUser.id === user.id
+                  ? { ...existingUser, ...data, pending: true }
+                  : existingUser,
               ),
             }
           : old,
@@ -106,30 +106,36 @@ const EditUser = ({ user, onSuccess }: EditUserProps) => {
       // Return a result with the snapshotted value
       return { previousUsers }
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
       showSuccessToast("User updated successfully")
-      setIsOpen(false)
-      onSuccess()
+      queryClient.setQueryData<UsersPublicWithPending>(["users"], (old) =>
+        old
+          ? {
+              ...old,
+              data: old.data.map((existingUser) =>
+                existingUser.id === data.id ? data : existingUser,
+              ),
+            }
+          : old,
+      )
     },
     // If the mutation fails,
     // use the result returned from onMutate to roll back
-    onError: (err, _newUser, context) => {
+    onError: (err, _variables, context) => {
       queryClient.setQueryData(["users"], context?.previousUsers)
       handleError.call(showErrorToast, err as ApiError)
     },
     // Always refetch after error or success:
-    onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: ["users"] })
-    },
+    onSettled: () => queryClient.invalidateQueries({ queryKey: ["users"] }),
   })
 
   const onSubmit = (data: FormData) => {
     // exclude confirm_password from submission data and remove password if empty
-    const { confirm_password: _, ...submitData } = data
-    if (!submitData.password) {
-      delete submitData.password
-    }
-    mutation.mutate(submitData)
+    const { confirm_password: _, ...userUpdate } = data
+    if (!userUpdate.password) delete userUpdate.password
+    setIsOpen(false)
+    onSuccess()
+    mutation.mutate(userUpdate)
   }
 
   return (

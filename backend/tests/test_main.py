@@ -50,6 +50,7 @@ def test_private_in_local() -> None:
         auto = _route_set(automatically_import_routers())
     assert any("/private" in r for r in auto)
 
+
 def test_private_not_in_production() -> None:
     with patch("app.main.settings.ENVIRONMENT", "production"):
         auto = _route_set(automatically_import_routers())

@@ -32,17 +32,20 @@ import {
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[]
   data: TData[]
+  rowClassName?: (row: TData) => string | undefined
 }
 
 export function DataTable<TData, TValue>({
   columns,
   data,
+  rowClassName,
 }: DataTableProps<TData, TValue>) {
   const table = useReactTable({
     data,
     columns,
     getCoreRowModel: getCoreRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
+    autoResetPageIndex: false,
   })
 
   return (
@@ -69,7 +72,7 @@ export function DataTable<TData, TValue>({
         <TableBody>
           {table.getRowModel().rows.length ? (
             table.getRowModel().rows.map((row) => (
-              <TableRow key={row.id}>
+              <TableRow key={row.id} className={rowClassName?.(row.original)}>
                 {row.getVisibleCells().map((cell) => (
                   <TableCell key={cell.id}>
                     {flexRender(cell.column.columnDef.cell, cell.getContext())}

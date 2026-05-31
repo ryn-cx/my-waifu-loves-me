@@ -47,7 +47,6 @@ def read_users(
     )
     users = session.exec(statement).all()
 
-
     users_public = [UserPublic.model_validate(user) for user in users]
     return UsersPublic(data=users_public, count=count)
 

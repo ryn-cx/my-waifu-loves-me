@@ -3,8 +3,9 @@ import { Trash2 } from "lucide-react"
 import { useState } from "react"
 import { useForm } from "react-hook-form"
 
-import type { ApiError, ItemsPublic } from "@/client"
+import type { ApiError } from "@/client"
 import { ItemsService } from "@/client"
+import type { ItemsPublicWithPending } from "@/components/Items/types"
 import { Button } from "@/components/ui/button"
 import {
   Dialog,
@@ -44,10 +45,12 @@ const DeleteItem = ({ id, onSuccess }: DeleteItemProps) => {
       await queryClient.cancelQueries({ queryKey: ["items"] })
 
       // Snapshot the previous value
-      const previousItems = queryClient.getQueryData<ItemsPublic>(["items"])
+      const previousItems = queryClient.getQueryData<ItemsPublicWithPending>([
+        "items",
+      ])
 
       // Optimistically update to the new value
-      queryClient.setQueryData<ItemsPublic>(["items"], (old) =>
+      queryClient.setQueryData<ItemsPublicWithPending>(["items"], (old) =>
         old
           ? {
               ...old,
@@ -62,8 +65,6 @@ const DeleteItem = ({ id, onSuccess }: DeleteItemProps) => {
     },
     onSuccess: () => {
       showSuccessToast("The item was deleted successfully")
-      setIsOpen(false)
-      onSuccess()
     },
     // If the mutation fails,
     // use the result returned from onMutate to roll back
@@ -72,12 +73,12 @@ const DeleteItem = ({ id, onSuccess }: DeleteItemProps) => {
       handleError.call(showErrorToast, err as ApiError)
     },
     // Always refetch after error or success:
-    onSettled: () => {
-      queryClient.invalidateQueries()
-    },
+    onSettled: () => queryClient.invalidateQueries({ queryKey: ["items"] }),
   })
 
   const onSubmit = async () => {
+    setIsOpen(false)
+    onSuccess()
     mutation.mutate(id)
   }
 

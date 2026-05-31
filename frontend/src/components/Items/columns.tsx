@@ -1,11 +1,11 @@
 import type { ColumnDef } from "@tanstack/react-table"
 import { Check, Copy } from "lucide-react"
 
-import type { ItemPublic } from "@/client"
 import { Button } from "@/components/ui/button"
 import { useCopyToClipboard } from "@/hooks/useCopyToClipboard"
 import { cn } from "@/lib/utils"
 import { ItemActionsMenu } from "./ItemActionsMenu"
+import type { ItemPublicWithPending } from "./types"
 
 function CopyId({ id }: { id: string }) {
   const [copiedText, copy] = useCopyToClipboard()
@@ -31,11 +31,18 @@ function CopyId({ id }: { id: string }) {
   )
 }
 
-export const columns: ColumnDef<ItemPublic>[] = [
+export const columns: ColumnDef<ItemPublicWithPending>[] = [
   {
     accessorKey: "id",
     header: "ID",
-    cell: ({ row }) => <CopyId id={row.original.id} />,
+    cell: ({ row }) =>
+      row.original.pending ? (
+        <span className="font-mono text-xs text-muted-foreground">
+          pending…
+        </span>
+      ) : (
+        <CopyId id={row.original.id} />
+      ),
   },
   {
     accessorKey: "title",
@@ -66,7 +73,7 @@ export const columns: ColumnDef<ItemPublic>[] = [
     header: () => <span className="sr-only">Actions</span>,
     cell: ({ row }) => (
       <div className="flex justify-end">
-        <ItemActionsMenu item={row.original} />
+        {row.original.pending ? null : <ItemActionsMenu item={row.original} />}
       </div>
     ),
   },

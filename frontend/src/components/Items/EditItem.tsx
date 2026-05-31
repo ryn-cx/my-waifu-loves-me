@@ -5,8 +5,9 @@ import { useState } from "react"
 import { useForm } from "react-hook-form"
 import { z } from "zod"
 
-import type { ApiError, ItemsPublic } from "@/client"
+import type { ApiError } from "@/client"
 import { type ItemPublic, ItemsService } from "@/client"
+import type { ItemsPublicWithPending } from "@/components/Items/types"
 import { Button } from "@/components/ui/button"
 import {
   Dialog,
@@ -62,21 +63,25 @@ const EditItem = ({ item, onSuccess }: EditItemProps) => {
     mutationFn: (data: FormData) =>
       ItemsService.updateItem({ itemId: item.id, requestBody: data }),
     // When mutate is called:
-    onMutate: async (newItem) => {
+    onMutate: async (data) => {
       // Cancel any outgoing refetches
       // (so they don't overwrite our optimistic update)
       await queryClient.cancelQueries({ queryKey: ["items"] })
 
       // Snapshot the previous value
-      const previousItems = queryClient.getQueryData<ItemsPublic>(["items"])
+      const previousItems = queryClient.getQueryData<ItemsPublicWithPending>([
+        "items",
+      ])
 
       // Optimistically update to the new value
-      queryClient.setQueryData<ItemsPublic>(["items"], (old) =>
+      queryClient.setQueryData<ItemsPublicWithPending>(["items"], (old) =>
         old
           ? {
               ...old,
-              data: old.data.map((it) =>
-                it.id === item.id ? { ...it, ...newItem } : it,
+              data: old.data.map((existingItem) =>
+                existingItem.id === item.id
+                  ? { ...existingItem, ...data, pending: true }
+                  : existingItem,
               ),
             }
           : old,
@@ -85,24 +90,32 @@ const EditItem = ({ item, onSuccess }: EditItemProps) => {
       // Return a result with the snapshotted value
       return { previousItems }
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
       showSuccessToast("Item updated successfully")
-      setIsOpen(false)
-      onSuccess()
+      queryClient.setQueryData<ItemsPublicWithPending>(["items"], (old) =>
+        old
+          ? {
+              ...old,
+              data: old.data.map((existingItem) =>
+                existingItem.id === data.id ? data : existingItem,
+              ),
+            }
+          : old,
+      )
     },
     // If the mutation fails,
     // use the result returned from onMutate to roll back
-    onError: (err, _newItem, context) => {
+    onError: (err, _variables, context) => {
       queryClient.setQueryData(["items"], context?.previousItems)
       handleError.call(showErrorToast, err as ApiError)
     },
     // Always refetch after error or success:
-    onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: ["items"] })
-    },
+    onSettled: () => queryClient.invalidateQueries({ queryKey: ["items"] }),
   })
 
   const onSubmit = (data: FormData) => {
+    setIsOpen(false)
+    onSuccess()
     mutation.mutate(data)
   }
 

@@ -7,11 +7,13 @@ import { ItemsService } from "@/client"
 import { DataTable } from "@/components/Common/DataTable"
 import AddItem from "@/components/Items/AddItem"
 import { columns } from "@/components/Items/columns"
+import type { ItemsPublicWithPending } from "@/components/Items/types"
 import PendingItems from "@/components/Pending/PendingItems"
 
 function getItemsQueryOptions() {
   return {
-    queryFn: () => ItemsService.readItems({ skip: 0, limit: 100_000 }),
+    queryFn: async (): Promise<ItemsPublicWithPending> =>
+      ItemsService.readItems({ skip: 0, limit: 100_000 }),
     queryKey: ["items"],
   }
 }
@@ -42,7 +44,13 @@ function ItemsTableContent() {
     )
   }
 
-  return <DataTable columns={columns} data={items.data} />
+  return (
+    <DataTable
+      columns={columns}
+      data={items.data}
+      rowClassName={(row) => (row.pending ? "opacity-50" : undefined)}
+    />
+  )
 }
 
 function ItemsTable() {

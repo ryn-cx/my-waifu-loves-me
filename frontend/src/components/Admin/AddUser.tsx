@@ -5,8 +5,9 @@ import { useState } from "react"
 import { useForm } from "react-hook-form"
 import { z } from "zod"
 
-import type { ApiError, UsersPublic } from "@/client"
-import { type UserCreate, UsersService } from "@/client"
+import type { ApiError, UserCreate } from "@/client"
+import { UsersService } from "@/client"
+import type { UsersPublicWithPending } from "@/components/Admin/types"
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
 import {
@@ -82,31 +83,46 @@ const AddUser = () => {
       await queryClient.cancelQueries({ queryKey: ["users"] })
 
       // Snapshot the previous value
-      const previousUsers = queryClient.getQueryData<UsersPublic>(["users"])
+      const previousUsers = queryClient.getQueryData<UsersPublicWithPending>([
+        "users",
+      ])
+
 
       // Optimistically update to the new value
-      const { password: _password, ...userData } = newUser
-      queryClient.setQueryData<UsersPublic>(["users"], (old) =>
+      const pendingId = `${crypto.randomUUID()} (pending)`
+      const { password: _p, ...publicNewUser } = newUser
+      queryClient.setQueryData<UsersPublicWithPending>(["users"], (old) =>
         old
           ? {
               ...old,
-              data: [...old.data, { ...userData, id: crypto.randomUUID() }],
+              data: [
+                ...old.data,
+                { ...publicNewUser, id: pendingId, pending: true },
+              ],
               count: old.count + 1,
             }
           : old,
       )
 
       // Return a result with the snapshotted value
-      return { previousUsers }
+      return { previousUsers, pendingId }
     },
-    onSuccess: () => {
+    onSuccess: (data, _variables, context) => {
       showSuccessToast("User created successfully")
-      form.reset()
-      setIsOpen(false)
+      queryClient.setQueryData<UsersPublicWithPending>(["users"], (old) =>
+        old
+          ? {
+              ...old,
+              data: old.data.map((user) =>
+                user.id === context.pendingId ? data : user,
+              ),
+            }
+          : old,
+      )
     },
     // If the mutation fails,
     // use the result returned from onMutate to roll back
-    onError: (err, _newUser, context) => {
+    onError: (err, _variables, context) => {
       queryClient.setQueryData(["users"], context?.previousUsers)
       handleError.call(showErrorToast, err as ApiError)
     },
@@ -117,7 +133,10 @@ const AddUser = () => {
   })
 
   const onSubmit = (data: FormData) => {
-    mutation.mutate(data)
+    const { confirm_password: _, ...userCreate } = data
+    setIsOpen(false)
+    form.reset()
+    mutation.mutate(userCreate)
   }
 
   return (

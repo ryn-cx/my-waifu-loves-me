@@ -66,6 +66,7 @@ def manually_import_routers() -> APIRouter:
 
     return api_router
 
+
 # Change this to manually_import_routers() if you don't want to use the automatic router
 # loader.
 api_router = automatically_import_routers()
