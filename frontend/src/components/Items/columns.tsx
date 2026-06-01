@@ -70,6 +70,8 @@ export const columns: ColumnDef<ItemPublicWithPending>[] = [
   },
   {
     id: "actions",
+    enableSorting: false,
+    enableColumnFilter: false,
     header: () => <span className="sr-only">Actions</span>,
     cell: ({ row }) => (
       <div className="flex justify-end">

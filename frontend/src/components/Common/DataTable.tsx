@@ -1,18 +1,32 @@
 import {
+  type Column,
   type ColumnDef,
+  type ColumnFiltersState,
   flexRender,
   getCoreRowModel,
+  getFacetedMinMaxValues,
+  getFacetedRowModel,
+  getFacetedUniqueValues,
+  getFilteredRowModel,
   getPaginationRowModel,
+  getSortedRowModel,
+  type RowData,
+  type SortingState,
   useReactTable,
 } from "@tanstack/react-table"
 import {
+  ArrowDown,
+  ArrowUp,
   ChevronLeft,
   ChevronRight,
   ChevronsLeft,
   ChevronsRight,
+  ChevronsUpDown,
 } from "lucide-react"
+import { useEffect, useMemo, useState } from "react"
 
 import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
 import {
   Select,
   SelectContent,
@@ -28,23 +42,79 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
+import { cn } from "@/lib/utils"
+
+declare module "@tanstack/react-table" {
+  //allows us to define custom properties for our columns
+  interface ColumnMeta<TData extends RowData, TValue> {
+    filterVariant?: "text" | "range" | "select"
+  }
+}
+
+// Resets the uppercase/tracking the header cell applies, so filter controls read normally.
+const FILTER_INPUT_CLASS = "h-7 text-xs font-normal normal-case tracking-normal"
+
+function usePersistentState<T>(key: string | undefined, initialValue: T) {
+  const [value, setValue] = useState<T>(() => {
+    if (!key) return initialValue
+    try {
+      const stored = sessionStorage.getItem(key)
+      return stored ? (JSON.parse(stored) as T) : initialValue
+    } catch {
+      return initialValue
+    }
+  })
+
+  useEffect(() => {
+    if (!key) return
+    try {
+      sessionStorage.setItem(key, JSON.stringify(value))
+    } catch {
+    }
+  }, [key, value])
+
+  return [value, setValue] as const
+}
 
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[]
   data: TData[]
   rowClassName?: (row: TData) => string | undefined
+  storageKey?: string
 }
 
 export function DataTable<TData, TValue>({
   columns,
   data,
   rowClassName,
+  storageKey,
 }: DataTableProps<TData, TValue>) {
+  const [sorting, setSorting] = usePersistentState<SortingState>(
+    storageKey && `${storageKey}:sorting`,
+    [],
+  )
+  const [columnFilters, setColumnFilters] =
+    usePersistentState<ColumnFiltersState>(
+      storageKey && `${storageKey}:filters`,
+      [],
+    )
+
   const table = useReactTable({
     data,
     columns,
     getCoreRowModel: getCoreRowModel(),
+    getSortedRowModel: getSortedRowModel(),
+    getFilteredRowModel: getFilteredRowModel(), //client-side filtering
     getPaginationRowModel: getPaginationRowModel(),
+    getFacetedRowModel: getFacetedRowModel(), // client-side faceting
+    getFacetedUniqueValues: getFacetedUniqueValues(), // generate unique values for select filter/autocomplete
+    getFacetedMinMaxValues: getFacetedMinMaxValues(), // generate min/max values for range filter
+    onSortingChange: setSorting,
+    onColumnFiltersChange: setColumnFilters,
+    state: {
+      sorting,
+      columnFilters,
+    },
     autoResetPageIndex: false,
   })
 
@@ -55,14 +125,49 @@ export function DataTable<TData, TValue>({
           {table.getHeaderGroups().map((headerGroup) => (
             <TableRow key={headerGroup.id} className="hover:bg-transparent">
               {headerGroup.headers.map((header) => {
+                const column = header.column
+
                 return (
-                  <TableHead key={header.id}>
-                    {header.isPlaceholder
-                      ? null
-                      : flexRender(
-                          header.column.columnDef.header,
-                          header.getContext(),
-                        )}
+                  <TableHead key={header.id} className="align-top">
+                    {header.isPlaceholder ? null : (
+                      <div className="flex flex-col gap-2 py-1">
+                        <button
+                          type="button"
+                          className={
+                            column.getCanSort()
+                              ? "flex items-center gap-1 cursor-pointer select-none"
+                              : "flex items-center gap-1"
+                          }
+                          onClick={column.getToggleSortingHandler()}
+                          disabled={!column.getCanSort()}
+                          title={
+                            column.getCanSort()
+                              ? column.getNextSortingOrder() === "asc"
+                                ? "Sort ascending"
+                                : column.getNextSortingOrder() === "desc"
+                                  ? "Sort descending"
+                                  : "Clear sort"
+                              : undefined
+                          }
+                        >
+                          {flexRender(
+                            column.columnDef.header,
+                            header.getContext(),
+                          )}
+                          {column.getCanSort() &&
+                            (column.getIsSorted() === "asc" ? (
+                              <ArrowUp className="size-3.5" />
+                            ) : column.getIsSorted() === "desc" ? (
+                              <ArrowDown className="size-3.5" />
+                            ) : (
+                              <ChevronsUpDown className="size-3.5 opacity-50" />
+                            ))}
+                        </button>
+                        {column.getCanFilter() ? (
+                          <Filter column={column} />
+                        ) : null}
+                      </div>
+                    )}
                   </TableHead>
                 )
               })}
@@ -105,10 +210,12 @@ export function DataTable<TData, TValue>({
               {Math.min(
                 (table.getState().pagination.pageIndex + 1) *
                   table.getState().pagination.pageSize,
-                data.length,
+                table.getFilteredRowModel().rows.length,
               )}{" "}
               of{" "}
-              <span className="font-medium text-foreground">{data.length}</span>{" "}
+              <span className="font-medium text-foreground">
+                {table.getFilteredRowModel().rows.length}
+              </span>{" "}
               entries
             </div>
             <div className="flex items-center gap-x-2">
@@ -196,5 +303,127 @@ export function DataTable<TData, TValue>({
         </div>
       )}
     </div>
+  )
+}
+
+function Filter<TData, TValue>({ column }: { column: Column<TData, TValue> }) {
+  const { filterVariant } = column.columnDef.meta ?? {}
+
+  const columnFilterValue = column.getFilterValue()
+
+  // biome-ignore lint/correctness/useExhaustiveDependencies: matches the official example — recompute when the faceted values change
+  const sortedUniqueValues = useMemo(
+    () =>
+      filterVariant === "range"
+        ? []
+        : Array.from(column.getFacetedUniqueValues().keys())
+            .sort()
+            .slice(0, 5000),
+    [column.getFacetedUniqueValues(), filterVariant],
+  )
+
+  return filterVariant === "range" ? (
+    <div>
+      <div className="flex space-x-2">
+        <DebouncedInput
+          type="number"
+          min={Number(column.getFacetedMinMaxValues()?.[0] ?? "")}
+          max={Number(column.getFacetedMinMaxValues()?.[1] ?? "")}
+          value={(columnFilterValue as [number, number])?.[0] ?? ""}
+          onChange={(value) =>
+            column.setFilterValue((old: [number, number]) => [value, old?.[1]])
+          }
+          placeholder={`Min ${
+            column.getFacetedMinMaxValues()?.[0] !== undefined
+              ? `(${column.getFacetedMinMaxValues()?.[0]})`
+              : ""
+          }`}
+          className={cn(FILTER_INPUT_CLASS, "w-24")}
+        />
+        <DebouncedInput
+          type="number"
+          min={Number(column.getFacetedMinMaxValues()?.[0] ?? "")}
+          max={Number(column.getFacetedMinMaxValues()?.[1] ?? "")}
+          value={(columnFilterValue as [number, number])?.[1] ?? ""}
+          onChange={(value) =>
+            column.setFilterValue((old: [number, number]) => [old?.[0], value])
+          }
+          placeholder={`Max ${
+            column.getFacetedMinMaxValues()?.[1]
+              ? `(${column.getFacetedMinMaxValues()?.[1]})`
+              : ""
+          }`}
+          className={cn(FILTER_INPUT_CLASS, "w-24")}
+        />
+      </div>
+      <div className="h-1" />
+    </div>
+  ) : filterVariant === "select" ? (
+    <select
+      onChange={(e) => column.setFilterValue(e.target.value)}
+      value={columnFilterValue?.toString()}
+      className={cn(FILTER_INPUT_CLASS, "rounded border px-1")}
+    >
+      <option value="">All</option>
+      {sortedUniqueValues.map((value) => (
+        //dynamically generated select options from faceted values feature
+        <option value={value} key={value}>
+          {value}
+        </option>
+      ))}
+    </select>
+  ) : (
+    <>
+      {/* Autocomplete suggestions from faceted values feature */}
+      <datalist id={`${column.id}list`}>
+        {sortedUniqueValues.map((value: string) => (
+          <option value={value} key={value} />
+        ))}
+      </datalist>
+      <DebouncedInput
+        type="text"
+        value={(columnFilterValue ?? "") as string}
+        onChange={(value) => column.setFilterValue(value)}
+        placeholder={`Search... (${column.getFacetedUniqueValues().size})`}
+        className={cn(FILTER_INPUT_CLASS, "w-36")}
+        list={`${column.id}list`}
+      />
+      <div className="h-1" />
+    </>
+  )
+}
+
+// A typical debounced input react component
+function DebouncedInput({
+  value: initialValue,
+  onChange,
+  debounce = 500,
+  ...props
+}: {
+  value: string | number
+  onChange: (value: string | number) => void
+  debounce?: number
+} & Omit<React.InputHTMLAttributes<HTMLInputElement>, "onChange">) {
+  const [value, setValue] = useState(initialValue)
+
+  useEffect(() => {
+    setValue(initialValue)
+  }, [initialValue])
+
+  // biome-ignore lint/correctness/useExhaustiveDependencies: matches the official example — only re-fire when the debounced value changes
+  useEffect(() => {
+    const timeout = setTimeout(() => {
+      onChange(value)
+    }, debounce)
+
+    return () => clearTimeout(timeout)
+  }, [value])
+
+  return (
+    <Input
+      {...props}
+      value={value}
+      onChange={(event) => setValue(event.target.value)}
+    />
   )
 }

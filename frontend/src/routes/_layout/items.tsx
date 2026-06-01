@@ -49,6 +49,7 @@ function ItemsTableContent() {
       columns={columns}
       data={items.data}
       rowClassName={(row) => (row.pending ? "opacity-50" : undefined)}
+      storageKey="items-table"
     />
   )
 }

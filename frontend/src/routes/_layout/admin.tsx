@@ -57,6 +57,7 @@ function UsersTableContent() {
       columns={columns}
       data={tableData}
       rowClassName={(row) => (row.pending ? "opacity-50" : undefined)}
+      storageKey="users-table"
     />
   )
 }

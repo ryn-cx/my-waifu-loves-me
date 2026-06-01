@@ -35,8 +35,11 @@ export const columns: ColumnDef<UserTableData>[] = [
     ),
   },
   {
-    accessorKey: "is_superuser",
+    id: "is_superuser",
+    accessorFn: (row) => (row.is_superuser ? "Superuser" : "User"),
     header: "Role",
+    meta: { filterVariant: "select" },
+    filterFn: "equalsString",
     cell: ({ row }) =>
       row.original.pending ? (
         <span className="text-muted-foreground">
@@ -49,8 +52,11 @@ export const columns: ColumnDef<UserTableData>[] = [
       ),
   },
   {
-    accessorKey: "is_active",
+    id: "is_active",
+    accessorFn: (row) => (row.is_active ? "Active" : "Inactive"),
     header: "Status",
+    meta: { filterVariant: "select" },
+    filterFn: "equalsString",
     cell: ({ row }) =>
       row.original.pending ? (
         <span className="text-muted-foreground">
@@ -74,6 +80,8 @@ export const columns: ColumnDef<UserTableData>[] = [
   },
   {
     id: "actions",
+    enableSorting: false,
+    enableColumnFilter: false,
     header: () => <span className="sr-only">Actions</span>,
     cell: ({ row }) => (
       <div className="flex justify-end">

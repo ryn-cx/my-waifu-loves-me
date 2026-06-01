@@ -87,7 +87,6 @@ const AddUser = () => {
         "users",
       ])
 
-
       // Optimistically update to the new value
       const pendingId = `${crypto.randomUUID()} (pending)`
       const { password: _p, ...publicNewUser } = newUser
