@@ -14,7 +14,7 @@ from app.auth.schemas import UpdatePassword
 from app.auth.security import get_password_hash, verify_password
 from app.config import settings
 from app.items.models import Item
-from app.models import Message
+from app.schemas import Message
 from app.users import service as user_service
 from app.users.models import User
 from app.users.schemas import (

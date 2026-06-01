@@ -13,7 +13,7 @@ from app.items.schemas import (
     ItemsPublic,
     ItemUpdate,
 )
-from app.models import Message
+from app.schemas import Message
 
 router = APIRouter(prefix="/items", tags=["items"])
 

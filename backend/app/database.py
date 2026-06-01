@@ -25,7 +25,7 @@ def init_db(session: Session) -> None:
     # # ERA001 - Error from original template.
     # from sqlmodel import SQLModel # noqa: ERA001
 
-    # This works because the models are already imported and registered from app.models
+    # This works because the models are already imported and registered from app.schemas
     # # ERA001 - Error from original template.
     # SQLModel.metadata.create_all(engine) # noqa: ERA001
     user = session.exec(
