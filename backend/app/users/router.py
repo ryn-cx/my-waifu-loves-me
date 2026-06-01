@@ -39,8 +39,6 @@ def read_users(
     """
     Retrieve users.
     """
-    time.sleep(5)
-
     count_statement = select(func.count()).select_from(User)
     count = session.exec(count_statement).one()
 
@@ -62,7 +60,6 @@ def create_user(*, session: SessionDep, user_in: UserCreate) -> User:
     """
     Create new user.
     """
-    time.sleep(5)
     user = user_service.get_user_by_email(session=session, email=user_in.email)
     if user:
         raise HTTPException(
@@ -95,8 +92,6 @@ def update_user_me(
     """
     Update own user.
     """
-    time.sleep(5)
-
     if user_in.email:
         existing_user = user_service.get_user_by_email(
             session=session,
@@ -125,7 +120,6 @@ def update_password_me(
     """
     Update own password.
     """
-    time.sleep(5)
     verified, _ = verify_password(body.current_password, current_user.hashed_password)
     if not verified:
         raise HTTPException(
@@ -149,7 +143,6 @@ def read_user_me(current_user: CurrentUser) -> CurrentUser:
     """
     Get current user.
     """
-    time.sleep(5)
     return current_user
 
 
@@ -158,7 +151,6 @@ def delete_user_me(session: SessionDep, current_user: CurrentUser) -> Message:
     """
     Delete own user.
     """
-    time.sleep(5)
     if current_user.is_superuser:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
@@ -174,7 +166,6 @@ def register_user(session: SessionDep, user_in: UserRegister) -> User:
     """
     Create new user without the need to be logged in.
     """
-    time.sleep(5)
     user = user_service.get_user_by_email(session=session, email=user_in.email)
     if user:
         raise HTTPException(
@@ -194,7 +185,6 @@ def read_user_by_id(
     """
     Get a specific user by id.
     """
-    time.sleep(5)
     user = session.get(User, user_id)
     if user == current_user:
         return user
@@ -225,8 +215,6 @@ def update_user(
     """
     Update a user.
     """
-    time.sleep(5)
-
     db_user = session.get(User, user_id)
     if not db_user:
         raise HTTPException(
@@ -260,7 +248,6 @@ def delete_user(
     """
     Delete a user.
     """
-    time.sleep(5)
     user = session.get(User, user_id)
     if not user:
         raise HTTPException(
