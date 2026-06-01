@@ -1,3 +1,4 @@
+import time  # Temporary delay so the frontend's pending UI is visible.
 import uuid
 from typing import Annotated
 
@@ -27,6 +28,7 @@ def read_items(
     """
     Retrieve items.
     """
+    time.sleep(5)
 
     if current_user.is_superuser:
         count_statement = select(func.count()).select_from(Item)
@@ -64,6 +66,7 @@ def read_item(
     """
     Get item by ID.
     """
+    time.sleep(5)
     item = session.get(Item, item_id)
     if not item:
         raise HTTPException(
@@ -88,6 +91,7 @@ def create_item(
     """
     Create new item.
     """
+    time.sleep(5)
     item = Item.model_validate(item_in, update={"owner_id": current_user.id})
     session.add(item)
     session.commit()
@@ -106,6 +110,7 @@ def update_item(
     """
     Update an item.
     """
+    time.sleep(5)
     item = session.get(Item, item_id)
     if not item:
         raise HTTPException(
@@ -134,6 +139,7 @@ def delete_item(
     """
     Delete an item.
     """
+    time.sleep(5)
     item = session.get(Item, item_id)
     if not item:
         raise HTTPException(
