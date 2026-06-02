@@ -1,4 +1,3 @@
-import time  # Temporary delay so the frontend's pending UI is visible.
 import uuid
 from typing import Annotated
 
