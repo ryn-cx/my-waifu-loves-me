@@ -43,6 +43,7 @@ import {
   TableRow,
 } from "@/components/ui/table"
 import { cn } from "@/lib/utils"
+import { TABLE_FILTER_INPUT_CLASS, TABLE_HEADER_CELL_CLASS } from "./tableStyles"
 
 declare module "@tanstack/react-table" {
   //allows us to define custom properties for our columns
@@ -50,9 +51,6 @@ declare module "@tanstack/react-table" {
     filterVariant?: "text" | "range" | "select"
   }
 }
-
-// Resets the uppercase/tracking the header cell applies, so filter controls read normally.
-const FILTER_INPUT_CLASS = "h-7 text-xs font-normal normal-case tracking-normal"
 
 function usePersistentState<T>(key: string | undefined, initialValue: T) {
   const [value, setValue] = useState<T>(() => {
@@ -130,7 +128,7 @@ export function DataTable<TData, TValue>({
                 return (
                   <TableHead key={header.id} className="align-top">
                     {header.isPlaceholder ? null : (
-                      <div className="flex flex-col gap-2 py-1">
+                      <div className={TABLE_HEADER_CELL_CLASS}>
                         <button
                           type="button"
                           className={
@@ -338,7 +336,7 @@ function Filter<TData, TValue>({ column }: { column: Column<TData, TValue> }) {
               ? `(${column.getFacetedMinMaxValues()?.[0]})`
               : ""
           }`}
-          className={cn(FILTER_INPUT_CLASS, "w-24")}
+          className={cn(TABLE_FILTER_INPUT_CLASS, "w-24")}
         />
         <DebouncedInput
           type="number"
@@ -353,7 +351,7 @@ function Filter<TData, TValue>({ column }: { column: Column<TData, TValue> }) {
               ? `(${column.getFacetedMinMaxValues()?.[1]})`
               : ""
           }`}
-          className={cn(FILTER_INPUT_CLASS, "w-24")}
+          className={cn(TABLE_FILTER_INPUT_CLASS, "w-24")}
         />
       </div>
       <div className="h-1" />
@@ -362,7 +360,7 @@ function Filter<TData, TValue>({ column }: { column: Column<TData, TValue> }) {
     <select
       onChange={(e) => column.setFilterValue(e.target.value)}
       value={columnFilterValue?.toString()}
-      className={cn(FILTER_INPUT_CLASS, "rounded border px-1")}
+      className={cn(TABLE_FILTER_INPUT_CLASS, "rounded border px-1")}
     >
       <option value="">All</option>
       {sortedUniqueValues.map((value) => (
@@ -385,7 +383,7 @@ function Filter<TData, TValue>({ column }: { column: Column<TData, TValue> }) {
         value={(columnFilterValue ?? "") as string}
         onChange={(value) => column.setFilterValue(value)}
         placeholder={`Search... (${column.getFacetedUniqueValues().size})`}
-        className={cn(FILTER_INPUT_CLASS, "w-36")}
+        className={cn(TABLE_FILTER_INPUT_CLASS, "w-36")}
         list={`${column.id}list`}
       />
       <div className="h-1" />
