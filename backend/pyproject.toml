@@ -62,6 +62,7 @@ ignore = [
   "B008",  # do not perform function calls in argument defaults
   "W191",  # indentation contains tabs
   "B904",  # Allow raising exceptions without from e, for HTTPException
+
   # Additional ignores.
   "D",  # Existing code does not contain docstrings.
   # Too many false positives.
