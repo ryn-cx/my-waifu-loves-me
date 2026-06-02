@@ -19,20 +19,9 @@ fileConfig(config.config_file_name)
 # target_metadata = mymodel.Base.metadata
 # target_metadata = None
 
-from importlib import import_module
 from sqlmodel import SQLModel
-from app.constants import APP_PATH
 from app.config import settings # noqa
-
-
-def automatically_import_models() -> None:
-    for model_file in APP_PATH.glob("*/models.py"):
-        import_module(f"app.{model_file.parent.name}.models")
-
-
-def manually_import_models() -> None:
-    import app.items.models  # noqa: PLC0415, F401
-    import app.users.models  # noqa: PLC0415, F401
+from app.database import automatically_import_models
 
 # Change this to manually_import_models() if you don't want to use the automatic model
 # loader.
