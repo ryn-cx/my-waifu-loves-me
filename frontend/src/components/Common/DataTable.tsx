@@ -10,6 +10,7 @@ import {
   getFilteredRowModel,
   getPaginationRowModel,
   getSortedRowModel,
+  type PaginationState,
   type RowData,
   type SortingState,
   useReactTable,
@@ -43,7 +44,10 @@ import {
   TableRow,
 } from "@/components/ui/table"
 import { cn } from "@/lib/utils"
-import { TABLE_FILTER_INPUT_CLASS, TABLE_HEADER_CELL_CLASS } from "./tableStyles"
+import {
+  TABLE_FILTER_INPUT_CLASS,
+  TABLE_HEADER_CELL_CLASS,
+} from "./tableStyles"
 
 declare module "@tanstack/react-table" {
   //allows us to define custom properties for our columns
@@ -67,8 +71,7 @@ function usePersistentState<T>(key: string | undefined, initialValue: T) {
     if (!key) return
     try {
       sessionStorage.setItem(key, JSON.stringify(value))
-    } catch {
-    }
+    } catch {}
   }, [key, value])
 
   return [value, setValue] as const
@@ -96,6 +99,10 @@ export function DataTable<TData, TValue>({
       storageKey && `${storageKey}:filters`,
       [],
     )
+  const [pagination, setPagination] = usePersistentState<PaginationState>(
+    storageKey && `${storageKey}:pagination`,
+    { pageIndex: 0, pageSize: 10 },
+  )
 
   const table = useReactTable({
     data,
@@ -109,9 +116,11 @@ export function DataTable<TData, TValue>({
     getFacetedMinMaxValues: getFacetedMinMaxValues(), // generate min/max values for range filter
     onSortingChange: setSorting,
     onColumnFiltersChange: setColumnFilters,
+    onPaginationChange: setPagination,
     state: {
       sorting,
       columnFilters,
+      pagination,
     },
     autoResetPageIndex: false,
   })
@@ -196,53 +205,55 @@ export function DataTable<TData, TValue>({
         </TableBody>
       </Table>
 
-      {table.getPageCount() > 1 && (
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 p-4 border-t bg-muted/20">
-          <div className="flex flex-col sm:flex-row sm:items-center gap-4">
-            <div className="text-sm text-muted-foreground">
-              Showing{" "}
-              {table.getState().pagination.pageIndex *
-                table.getState().pagination.pageSize +
-                1}{" "}
-              to{" "}
-              {Math.min(
-                (table.getState().pagination.pageIndex + 1) *
-                  table.getState().pagination.pageSize,
-                table.getFilteredRowModel().rows.length,
-              )}{" "}
-              of{" "}
-              <span className="font-medium text-foreground">
-                {table.getFilteredRowModel().rows.length}
-              </span>{" "}
-              entries
-            </div>
-            <div className="flex items-center gap-x-2">
-              <p className="text-sm text-muted-foreground">Rows per page</p>
-              <Select
-                value={`${table.getState().pagination.pageSize}`}
-                onValueChange={(value) => {
-                  table.setPageSize(Number(value))
-                }}
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 p-4 border-t bg-muted/20">
+        <div className="flex flex-col sm:flex-row sm:items-center gap-4">
+          <div className="text-sm text-muted-foreground">
+            Showing{" "}
+            {table.getState().pagination.pageIndex *
+              table.getState().pagination.pageSize +
+              1}{" "}
+            to{" "}
+            {Math.min(
+              (table.getState().pagination.pageIndex + 1) *
+                table.getState().pagination.pageSize,
+              table.getFilteredRowModel().rows.length,
+            )}{" "}
+            of{" "}
+            <span className="font-medium text-foreground">
+              {table.getFilteredRowModel().rows.length}
+            </span>{" "}
+            entries
+          </div>
+          <div className="flex items-center gap-x-2">
+            <p className="text-sm text-muted-foreground">Rows per page</p>
+            <Select
+              value={`${table.getState().pagination.pageSize}`}
+              onValueChange={(value) => {
+                table.setPageSize(Number(value))
+              }}
+            >
+              <SelectTrigger
+                className="h-8 w-[70px]"
+                aria-label="Rows per page"
               >
-                <SelectTrigger
-                  className="h-8 w-[70px]"
-                  aria-label="Rows per page"
-                >
-                  <SelectValue
-                    placeholder={table.getState().pagination.pageSize}
-                  />
-                </SelectTrigger>
-                <SelectContent side="top">
-                  {[5, 10, 25, 50, 100, 100_000].map((pageSize) => (
+                <SelectValue
+                  placeholder={table.getState().pagination.pageSize}
+                />
+              </SelectTrigger>
+              <SelectContent side="top">
+                {[10, 100, 1_000, 10_000, 100_000].map(
+                  (pageSize) => (
                     <SelectItem key={pageSize} value={`${pageSize}`}>
                       {pageSize}
                     </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+                  ),
+                )}
+              </SelectContent>
+            </Select>
           </div>
+        </div>
 
+        {table.getPageCount() > 1 && (
           <div className="flex items-center gap-x-6">
             <div className="flex items-center gap-x-1 text-sm text-muted-foreground">
               <span>Page</span>
@@ -298,8 +309,8 @@ export function DataTable<TData, TValue>({
               </Button>
             </div>
           </div>
-        </div>
-      )}
+        )}
+      </div>
     </div>
   )
 }
