@@ -22,11 +22,12 @@ def manually_import_models() -> None:
 
 
 def init_db(session: Session) -> None:
-    # make sure all SQLModel models are imported before initializing DB otherwise, SQLModel
-    # might fail to initialize relationships properly
-    # for more details: https://github.com/fastapi/full-stack-fastapi-template/issues/28\
-    # Change this to manually_import_models() if you don't want to use the automatic model
-    # loader.
+    # make sure all SQLModel models are imported before initializing DB otherwise,
+    # SQLModel might fail to initialize relationships properly for more details:
+    # https://github.com/fastapi/full-stack-fastapi-template/issues/28
+
+    # Change this to manually_import_models() if you don't want to use the automatic
+    # model loader.
     automatically_import_models()
 
     # Tables should be created with Alembic migrations
