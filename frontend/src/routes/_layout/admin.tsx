@@ -1,7 +1,8 @@
-import { useSuspenseQuery } from "@tanstack/react-query"
+import { useMutationState, useSuspenseQuery } from "@tanstack/react-query"
 import { createFileRoute, redirect } from "@tanstack/react-router"
 import { Suspense } from "react"
 
+import type { UserCreate } from "@/client"
 import { UsersService } from "@/client"
 import AddUser from "@/components/Admin/AddUser"
 import { columns } from "@/components/Admin/columns"
@@ -46,12 +47,29 @@ function UsersTableContent() {
   const { user: currentUser } = useAuth()
   const { data: users } = useSuspenseQuery(getUsersQueryOptions())
 
-  const tableData: UserTableData[] = users.data.map(
-    (user: UserPublicWithPending) => ({
+  const pendingUsers = useMutationState({
+    filters: { mutationKey: ["users", "create"], status: "pending" },
+    select: (mutation): UserTableData => {
+      const variables = mutation.state.variables as UserCreate
+      return {
+        id: `pending-${mutation.mutationId}`,
+        email: variables.email,
+        full_name: variables.full_name ?? null,
+        is_superuser: variables.is_superuser ?? false,
+        is_active: variables.is_active ?? false,
+        pending: true,
+        isCurrentUser: false,
+      }
+    },
+  })
+
+  const tableData: UserTableData[] = [
+    ...pendingUsers,
+    ...users.data.map((user: UserPublicWithPending) => ({
       ...user,
       isCurrentUser: currentUser?.id === user.id,
-    }),
-  )
+    })),
+  ]
 
   return (
     <DataTable

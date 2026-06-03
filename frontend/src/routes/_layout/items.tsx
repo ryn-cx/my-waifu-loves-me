@@ -1,14 +1,18 @@
-import { useSuspenseQuery } from "@tanstack/react-query"
+import { useMutationState, useSuspenseQuery } from "@tanstack/react-query"
 import { createFileRoute } from "@tanstack/react-router"
 import { Search } from "lucide-react"
 import { Suspense } from "react"
 
+import type { ItemCreate } from "@/client"
 import { ItemsService } from "@/client"
 import { DataTable } from "@/components/Common/DataTable"
 import { PageHeader } from "@/components/Common/PageHeader"
 import AddItem from "@/components/Items/AddItem"
 import { columns } from "@/components/Items/columns"
-import type { ItemsPublicWithPending } from "@/components/Items/types"
+import type {
+  ItemPublicWithPending,
+  ItemsPublicWithPending,
+} from "@/components/Items/types"
 import PendingItems from "@/components/Pending/PendingItems"
 
 function getItemsQueryOptions() {
@@ -33,7 +37,19 @@ export const Route = createFileRoute("/_layout/items")({
 function ItemsTableContent() {
   const { data: items } = useSuspenseQuery(getItemsQueryOptions())
 
-  if (items.data.length === 0) {
+  const pendingItems = useMutationState({
+    filters: { mutationKey: ["items", "create"], status: "pending" },
+    select: (mutation): ItemPublicWithPending => ({
+      ...(mutation.state.variables as ItemCreate),
+      id: `pending-${mutation.mutationId}`,
+      owner_id: "",
+      pending: true,
+    }),
+  })
+
+  const data = [...pendingItems, ...items.data]
+
+  if (data.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center text-center py-12">
         <div className="rounded-full bg-muted p-4 mb-4">
@@ -48,7 +64,7 @@ function ItemsTableContent() {
   return (
     <DataTable
       columns={columns}
-      data={items.data}
+      data={data}
       rowClassName={(row) => (row.pending ? "opacity-50" : undefined)}
       storageKey="items-table"
     />

@@ -6,7 +6,6 @@ import { z } from "zod"
 
 import type { ApiError, UserCreate } from "@/client"
 import { UsersService } from "@/client"
-import type { UsersPublicWithPending } from "@/components/Admin/types"
 import { AddButton } from "@/components/Common/AddButton"
 import { FormTextField } from "@/components/Common/FormTextField"
 import { Button } from "@/components/ui/button"
@@ -73,58 +72,15 @@ const AddUser = () => {
   })
 
   const mutation = useMutation({
+    mutationKey: ["users", "create"],
     mutationFn: (data: UserCreate) =>
       UsersService.createUser({ requestBody: data }),
-    // When mutate is called:
-    onMutate: async (newUser) => {
-      // Cancel any outgoing refetches
-      // (so they don't overwrite our optimistic update)
-      await queryClient.cancelQueries({ queryKey: ["users"] })
-
-      // Snapshot the previous value
-      const previousUsers = queryClient.getQueryData<UsersPublicWithPending>([
-        "users",
-      ])
-
-      // Optimistically update to the new value
-      const pendingId = crypto.randomUUID()
-      const { password: _p, ...publicNewUser } = newUser
-      queryClient.setQueryData<UsersPublicWithPending>(["users"], (old) =>
-        old
-          ? {
-              ...old,
-              data: [
-                ...old.data,
-                { ...publicNewUser, id: pendingId, pending: true },
-              ],
-              count: old.count + 1,
-            }
-          : old,
-      )
-
-      // Return a result with the snapshotted value
-      return { previousUsers, pendingId }
-    },
-    onSuccess: (data, _variables, context) => {
+    onSuccess: () => {
       showSuccessToast("User created successfully")
-      queryClient.setQueryData<UsersPublicWithPending>(["users"], (old) =>
-        old
-          ? {
-              ...old,
-              data: old.data.map((user) =>
-                user.id === context.pendingId ? data : user,
-              ),
-            }
-          : old,
-      )
     },
-    // If the mutation fails,
-    // use the result returned from onMutate to roll back
-    onError: (err, _variables, context) => {
-      queryClient.setQueryData(["users"], context?.previousUsers)
+    onError: (err) => {
       handleError.call(showErrorToast, err as ApiError)
     },
-    // Always refetch after error or success:
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ["users"] })
     },

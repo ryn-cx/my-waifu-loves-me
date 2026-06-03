@@ -8,7 +8,6 @@ import type { ApiError, ItemCreate } from "@/client"
 import { ItemsService } from "@/client"
 import { AddButton } from "@/components/Common/AddButton"
 import { FormTextField } from "@/components/Common/FormTextField"
-import type { ItemsPublicWithPending } from "@/components/Items/types"
 import { Button } from "@/components/ui/button"
 import {
   Dialog,
@@ -48,63 +47,15 @@ const AddItem = () => {
   })
 
   const mutation = useMutation({
+    mutationKey: ["items", "create"],
     mutationFn: (data: ItemCreate) =>
       ItemsService.createItem({ requestBody: data }),
-    // When mutate is called:
-    onMutate: async (newItem) => {
-      // Cancel any outgoing refetches
-      // (so they don't overwrite our optimistic update)
-      await queryClient.cancelQueries({ queryKey: ["items"] })
-
-      // Snapshot the previous value
-      const previousItems = queryClient.getQueryData<ItemsPublicWithPending>([
-        "items",
-      ])
-
-      const pendingId = crypto.randomUUID()
-
-      // Optimistically update to the new value
-      queryClient.setQueryData<ItemsPublicWithPending>(["items"], (old) =>
-        old
-          ? {
-              ...old,
-              data: [
-                ...old.data,
-                {
-                  ...newItem,
-                  id: pendingId,
-                  owner_id: "",
-                  pending: true,
-                },
-              ],
-              count: old.count + 1,
-            }
-          : old,
-      )
-
-      // Return a result with the snapshotted value (and the tracking id)
-      return { previousItems, pendingId }
-    },
-    onSuccess: (data, _variables, context) => {
+    onSuccess: () => {
       showSuccessToast("Item created successfully")
-      queryClient.setQueryData<ItemsPublicWithPending>(["items"], (old) =>
-        old
-          ? {
-              ...old,
-              data: old.data.map((item) =>
-                item.id === context.pendingId ? data : item,
-              ),
-            }
-          : old,
-      )
     },
-    // If the mutation fails,
-    // use the result returned from onMutate to roll back
-    onError: (err, _variables, context) => {
-      queryClient.setQueryData(["items"], context?.previousItems)
+    onError: (err) => {
       handleError.call(showErrorToast, err as ApiError)
     },
-    // Always refetch after error or success:
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ["items"] })
     },
