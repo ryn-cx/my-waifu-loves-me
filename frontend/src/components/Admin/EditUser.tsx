@@ -19,7 +19,6 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
-import { DropdownMenuItem } from "@/components/ui/dropdown-menu"
 import {
   Form,
   FormControl,
@@ -30,6 +29,11 @@ import {
 } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
 import { LoadingButton } from "@/components/ui/loading-button"
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip"
 import useCustomToast from "@/hooks/useCustomToast"
 import { handleError } from "@/utils"
 
@@ -55,10 +59,9 @@ type FormData = z.infer<typeof formSchema>
 
 interface EditUserProps {
   user: UserPublic
-  onSuccess: () => void
 }
 
-const EditUser = ({ user, onSuccess }: EditUserProps) => {
+const EditUser = ({ user }: EditUserProps) => {
   const [isOpen, setIsOpen] = useState(false)
   const queryClient = useQueryClient()
   const { showSuccessToast, showErrorToast } = useCustomToast()
@@ -134,19 +137,20 @@ const EditUser = ({ user, onSuccess }: EditUserProps) => {
     const { confirm_password: _, ...userUpdate } = data
     if (!userUpdate.password) delete userUpdate.password
     setIsOpen(false)
-    onSuccess()
     mutation.mutate(userUpdate)
   }
 
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
-      <DropdownMenuItem
-        onSelect={(e) => e.preventDefault()}
-        onClick={() => setIsOpen(true)}
-      >
-        <Pencil />
-        Edit User
-      </DropdownMenuItem>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <Button variant="ghost" size="icon" onClick={() => setIsOpen(true)}>
+            <Pencil />
+            <span className="sr-only">Edit User</span>
+          </Button>
+        </TooltipTrigger>
+        <TooltipContent>Edit User</TooltipContent>
+      </Tooltip>
       <DialogContent className="sm:max-w-md">
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)}>

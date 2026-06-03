@@ -16,17 +16,20 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
-import { DropdownMenuItem } from "@/components/ui/dropdown-menu"
 import { LoadingButton } from "@/components/ui/loading-button"
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip"
 import useCustomToast from "@/hooks/useCustomToast"
 import { handleError } from "@/utils"
 
 interface DeleteUserProps {
   id: string
-  onSuccess: () => void
 }
 
-const DeleteUser = ({ id, onSuccess }: DeleteUserProps) => {
+const DeleteUser = ({ id }: DeleteUserProps) => {
   const [isOpen, setIsOpen] = useState(false)
   const queryClient = useQueryClient()
   const { showSuccessToast, showErrorToast } = useCustomToast()
@@ -78,20 +81,25 @@ const DeleteUser = ({ id, onSuccess }: DeleteUserProps) => {
 
   const onSubmit = async () => {
     setIsOpen(false)
-    onSuccess()
     mutation.mutate(id)
   }
 
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
-      <DropdownMenuItem
-        variant="destructive"
-        onSelect={(e) => e.preventDefault()}
-        onClick={() => setIsOpen(true)}
-      >
-        <Trash2 />
-        Delete User
-      </DropdownMenuItem>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="text-destructive hover:text-destructive"
+            onClick={() => setIsOpen(true)}
+          >
+            <Trash2 />
+            <span className="sr-only">Delete User</span>
+          </Button>
+        </TooltipTrigger>
+        <TooltipContent>Delete User</TooltipContent>
+      </Tooltip>
       <DialogContent className="sm:max-w-md">
         <form onSubmit={handleSubmit(onSubmit)}>
           <DialogHeader>

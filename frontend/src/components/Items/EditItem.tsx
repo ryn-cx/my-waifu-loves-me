@@ -18,7 +18,6 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
-import { DropdownMenuItem } from "@/components/ui/dropdown-menu"
 import {
   Form,
   FormControl,
@@ -29,6 +28,11 @@ import {
 } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
 import { LoadingButton } from "@/components/ui/loading-button"
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip"
 import useCustomToast from "@/hooks/useCustomToast"
 import { handleError } from "@/utils"
 
@@ -41,10 +45,9 @@ type FormData = z.infer<typeof formSchema>
 
 interface EditItemProps {
   item: ItemPublic
-  onSuccess: () => void
 }
 
-const EditItem = ({ item, onSuccess }: EditItemProps) => {
+const EditItem = ({ item }: EditItemProps) => {
   const [isOpen, setIsOpen] = useState(false)
   const queryClient = useQueryClient()
   const { showSuccessToast, showErrorToast } = useCustomToast()
@@ -115,19 +118,20 @@ const EditItem = ({ item, onSuccess }: EditItemProps) => {
 
   const onSubmit = (data: FormData) => {
     setIsOpen(false)
-    onSuccess()
     mutation.mutate(data)
   }
 
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
-      <DropdownMenuItem
-        onSelect={(e) => e.preventDefault()}
-        onClick={() => setIsOpen(true)}
-      >
-        <Pencil />
-        Edit Item
-      </DropdownMenuItem>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <Button variant="ghost" size="icon" onClick={() => setIsOpen(true)}>
+            <Pencil />
+            <span className="sr-only">Edit Item</span>
+          </Button>
+        </TooltipTrigger>
+        <TooltipContent>Edit Item</TooltipContent>
+      </Tooltip>
       <DialogContent className="sm:max-w-md">
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)}>
