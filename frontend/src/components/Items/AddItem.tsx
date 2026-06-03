@@ -68,7 +68,7 @@ const AddItem = () => {
         "items",
       ])
 
-      const pendingId = `${crypto.randomUUID()} (pending)`
+      const pendingId = crypto.randomUUID()
 
       // Optimistically update to the new value
       queryClient.setQueryData<ItemsPublicWithPending>(["items"], (old) =>

@@ -88,7 +88,7 @@ const AddUser = () => {
       ])
 
       // Optimistically update to the new value
-      const pendingId = `${crypto.randomUUID()} (pending)`
+      const pendingId = crypto.randomUUID()
       const { password: _p, ...publicNewUser } = newUser
       queryClient.setQueryData<UsersPublicWithPending>(["users"], (old) =>
         old
