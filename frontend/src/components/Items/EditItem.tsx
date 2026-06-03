@@ -7,6 +7,8 @@ import { z } from "zod"
 
 import type { ApiError } from "@/client"
 import { type ItemPublic, ItemsService } from "@/client"
+import { FormTextField } from "@/components/Common/FormTextField"
+import { TooltipIconButton } from "@/components/Common/TooltipIconButton"
 import type { ItemsPublicWithPending } from "@/components/Items/types"
 import { Button } from "@/components/ui/button"
 import {
@@ -18,21 +20,8 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form"
-import { Input } from "@/components/ui/input"
+import { Form } from "@/components/ui/form"
 import { LoadingButton } from "@/components/ui/loading-button"
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@/components/ui/tooltip"
 import useCustomToast from "@/hooks/useCustomToast"
 import { handleError } from "@/utils"
 
@@ -123,15 +112,11 @@ const EditItem = ({ item }: EditItemProps) => {
 
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <Button variant="ghost" size="icon" onClick={() => setIsOpen(true)}>
-            <Pencil />
-            <span className="sr-only">Edit Item</span>
-          </Button>
-        </TooltipTrigger>
-        <TooltipContent>Edit Item</TooltipContent>
-      </Tooltip>
+      <TooltipIconButton
+        label="Edit Item"
+        icon={<Pencil />}
+        onClick={() => setIsOpen(true)}
+      />
       <DialogContent className="sm:max-w-md">
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)}>
@@ -142,34 +127,21 @@ const EditItem = ({ item }: EditItemProps) => {
               </DialogDescription>
             </DialogHeader>
             <div className="grid gap-4 py-4">
-              <FormField
+              <FormTextField
                 control={form.control}
                 name="title"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>
-                      Title <span className="text-destructive">*</span>
-                    </FormLabel>
-                    <FormControl>
-                      <Input placeholder="Title" type="text" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
+                label="Title"
+                placeholder="Title"
+                type="text"
+                required
               />
 
-              <FormField
+              <FormTextField
                 control={form.control}
                 name="description"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Description</FormLabel>
-                    <FormControl>
-                      <Input placeholder="Description" type="text" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
+                label="Description"
+                placeholder="Description"
+                type="text"
               />
             </div>
 

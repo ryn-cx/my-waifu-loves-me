@@ -38,7 +38,10 @@ const TextHeader = ({ label }: { label: string }) => (
 const SelectHeader = ({ label }: { label: string }) => (
   <div className={TABLE_HEADER_CELL_CLASS}>
     <SortLabel label={label} />
-    <select disabled className={cn(TABLE_FILTER_INPUT_CLASS, "rounded border px-1")}>
+    <select
+      disabled
+      className={cn(TABLE_FILTER_INPUT_CLASS, "rounded border px-1")}
+    >
       <option>All</option>
     </select>
   </div>

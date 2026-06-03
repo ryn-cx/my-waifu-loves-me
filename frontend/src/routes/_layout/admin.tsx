@@ -11,6 +11,7 @@ import type {
   UserTableData,
 } from "@/components/Admin/types"
 import { DataTable } from "@/components/Common/DataTable"
+import { PageHeader } from "@/components/Common/PageHeader"
 import PendingUsers from "@/components/Pending/PendingUsers"
 import useAuth from "@/hooks/useAuth"
 
@@ -73,15 +74,12 @@ function UsersTable() {
 function Admin() {
   return (
     <div className="flex flex-col gap-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight">Users</h1>
-          <p className="text-muted-foreground">
-            Manage user accounts and permissions
-          </p>
-        </div>
+      <PageHeader
+        title="Users"
+        description="Manage user accounts and permissions"
+      >
         <AddUser />
-      </div>
+      </PageHeader>
       <UsersTable />
     </div>
   )

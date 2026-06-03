@@ -5,6 +5,7 @@ import { Suspense } from "react"
 
 import { ItemsService } from "@/client"
 import { DataTable } from "@/components/Common/DataTable"
+import { PageHeader } from "@/components/Common/PageHeader"
 import AddItem from "@/components/Items/AddItem"
 import { columns } from "@/components/Items/columns"
 import type { ItemsPublicWithPending } from "@/components/Items/types"
@@ -65,13 +66,9 @@ function ItemsTable() {
 function Items() {
   return (
     <div className="flex flex-col gap-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight">Items</h1>
-          <p className="text-muted-foreground">Create and manage your items</p>
-        </div>
+      <PageHeader title="Items" description="Create and manage your items">
         <AddItem />
-      </div>
+      </PageHeader>
       <ItemsTable />
     </div>
   )

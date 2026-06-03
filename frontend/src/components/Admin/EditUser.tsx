@@ -8,6 +8,8 @@ import { z } from "zod"
 import type { ApiError } from "@/client"
 import { type UserPublic, UsersService } from "@/client"
 import type { UsersPublicWithPending } from "@/components/Admin/types"
+import { FormTextField } from "@/components/Common/FormTextField"
+import { TooltipIconButton } from "@/components/Common/TooltipIconButton"
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
 import {
@@ -25,15 +27,8 @@ import {
   FormField,
   FormItem,
   FormLabel,
-  FormMessage,
 } from "@/components/ui/form"
-import { Input } from "@/components/ui/input"
 import { LoadingButton } from "@/components/ui/loading-button"
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@/components/ui/tooltip"
 import useCustomToast from "@/hooks/useCustomToast"
 import { handleError } from "@/utils"
 
@@ -142,15 +137,11 @@ const EditUser = ({ user }: EditUserProps) => {
 
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <Button variant="ghost" size="icon" onClick={() => setIsOpen(true)}>
-            <Pencil />
-            <span className="sr-only">Edit User</span>
-          </Button>
-        </TooltipTrigger>
-        <TooltipContent>Edit User</TooltipContent>
-      </Tooltip>
+      <TooltipIconButton
+        label="Edit User"
+        icon={<Pencil />}
+        onClick={() => setIsOpen(true)}
+      />
       <DialogContent className="sm:max-w-md">
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)}>
@@ -161,75 +152,37 @@ const EditUser = ({ user }: EditUserProps) => {
               </DialogDescription>
             </DialogHeader>
             <div className="grid gap-4 py-4">
-              <FormField
+              <FormTextField
                 control={form.control}
                 name="email"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>
-                      Email <span className="text-destructive">*</span>
-                    </FormLabel>
-                    <FormControl>
-                      <Input
-                        placeholder="Email"
-                        type="email"
-                        {...field}
-                        required
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
+                label="Email"
+                placeholder="Email"
+                type="email"
+                required
               />
 
-              <FormField
+              <FormTextField
                 control={form.control}
                 name="full_name"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Full Name</FormLabel>
-                    <FormControl>
-                      <Input placeholder="Full name" type="text" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
+                label="Full Name"
+                placeholder="Full name"
+                type="text"
               />
 
-              <FormField
+              <FormTextField
                 control={form.control}
                 name="password"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Set Password</FormLabel>
-                    <FormControl>
-                      <Input
-                        placeholder="Password"
-                        type="password"
-                        {...field}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
+                label="Set Password"
+                placeholder="Password"
+                type="password"
               />
 
-              <FormField
+              <FormTextField
                 control={form.control}
                 name="confirm_password"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Confirm Password</FormLabel>
-                    <FormControl>
-                      <Input
-                        placeholder="Password"
-                        type="password"
-                        {...field}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
+                label="Confirm Password"
+                placeholder="Password"
+                type="password"
               />
 
               <FormField

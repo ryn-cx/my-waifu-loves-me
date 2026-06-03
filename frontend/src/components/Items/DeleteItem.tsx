@@ -1,27 +1,11 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query"
 import { Trash2 } from "lucide-react"
-import { useState } from "react"
-import { useForm } from "react-hook-form"
 
 import type { ApiError } from "@/client"
 import { ItemsService } from "@/client"
+import { ConfirmDialog } from "@/components/Common/ConfirmDialog"
+import { TooltipIconButton } from "@/components/Common/TooltipIconButton"
 import type { ItemsPublicWithPending } from "@/components/Items/types"
-import { Button } from "@/components/ui/button"
-import {
-  Dialog,
-  DialogClose,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog"
-import { LoadingButton } from "@/components/ui/loading-button"
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@/components/ui/tooltip"
 import useCustomToast from "@/hooks/useCustomToast"
 import { handleError } from "@/utils"
 
@@ -30,10 +14,8 @@ interface DeleteItemProps {
 }
 
 const DeleteItem = ({ id }: DeleteItemProps) => {
-  const [isOpen, setIsOpen] = useState(false)
   const queryClient = useQueryClient()
   const { showSuccessToast, showErrorToast } = useCustomToast()
-  const { handleSubmit } = useForm()
 
   const deleteItem = async (id: string) => {
     await ItemsService.deleteItem({ itemId: id })
@@ -79,54 +61,20 @@ const DeleteItem = ({ id }: DeleteItemProps) => {
     onSettled: () => queryClient.invalidateQueries({ queryKey: ["items"] }),
   })
 
-  const onSubmit = async () => {
-    setIsOpen(false)
-    mutation.mutate(id)
-  }
-
   return (
-    <Dialog open={isOpen} onOpenChange={setIsOpen}>
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="text-destructive hover:text-destructive"
-            onClick={() => setIsOpen(true)}
-          >
-            <Trash2 />
-            <span className="sr-only">Delete Item</span>
-          </Button>
-        </TooltipTrigger>
-        <TooltipContent>Delete Item</TooltipContent>
-      </Tooltip>
-      <DialogContent className="sm:max-w-md">
-        <form onSubmit={handleSubmit(onSubmit)}>
-          <DialogHeader>
-            <DialogTitle>Delete Item</DialogTitle>
-            <DialogDescription>
-              This item will be permanently deleted. Are you sure? You will not
-              be able to undo this action.
-            </DialogDescription>
-          </DialogHeader>
-
-          <DialogFooter className="mt-4">
-            <DialogClose asChild>
-              <Button variant="outline" disabled={mutation.isPending}>
-                Cancel
-              </Button>
-            </DialogClose>
-            <LoadingButton
-              variant="destructive"
-              type="submit"
-              loading={mutation.isPending}
-            >
-              Delete
-            </LoadingButton>
-          </DialogFooter>
-        </form>
-      </DialogContent>
-    </Dialog>
+    <ConfirmDialog
+      trigger={
+        <TooltipIconButton
+          label="Delete Item"
+          icon={<Trash2 />}
+          className="text-destructive hover:text-destructive"
+        />
+      }
+      title="Delete Item"
+      description="This item will be permanently deleted. Are you sure? You will not be able to undo this action."
+      onConfirm={() => mutation.mutate(id)}
+      isLoading={mutation.isPending}
+    />
   )
 }
 

@@ -242,13 +242,11 @@ export function DataTable<TData extends { id: string }, TValue>({
                 />
               </SelectTrigger>
               <SelectContent side="top">
-                {[10, 100, 1_000, 10_000, 100_000].map(
-                  (pageSize) => (
-                    <SelectItem key={pageSize} value={`${pageSize}`}>
-                      {pageSize}
-                    </SelectItem>
-                  ),
-                )}
+                {[10, 100, 1_000, 10_000, 100_000].map((pageSize) => (
+                  <SelectItem key={pageSize} value={`${pageSize}`}>
+                    {pageSize}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>

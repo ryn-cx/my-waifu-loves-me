@@ -37,9 +37,7 @@ export const columns: ColumnDef<ItemPublicWithPending>[] = [
     header: "ID",
     cell: ({ row }) =>
       row.original.pending ? (
-        <span className="font-mono text-xs text-muted-foreground">
-          Pending
-        </span>
+        <span className="font-mono text-xs text-muted-foreground">Pending</span>
       ) : (
         <CopyId id={row.original.id} />
       ),
