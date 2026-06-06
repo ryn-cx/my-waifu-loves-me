@@ -1,14 +1,22 @@
+from collections.abc import Generator
 from importlib import import_module
+from typing import Annotated
 
-from sqlmodel import Session, create_engine, select
+from fastapi import Depends
+from sqlmodel import Session, create_engine
 
 from app.config import settings
 from app.constants import APP_PATH
-from app.users import service as user_service
-from app.users.models import User
-from app.users.schemas import UserCreate
 
 engine = create_engine(str(settings.SQLALCHEMY_DATABASE_URI))
+
+
+def get_db() -> Generator[Session]:
+    with Session(engine) as session:
+        yield session
+
+
+SessionDep = Annotated[Session, Depends(get_db)]
 
 
 def automatically_import_models() -> None:
@@ -17,13 +25,10 @@ def automatically_import_models() -> None:
         import_module(f"app.{model_file.parent.name}.models")
 
 
-def init_db(session: Session) -> None:
+def init_db() -> None:
     # make sure all SQLModel models are imported before initializing DB otherwise,
     # SQLModel might fail to initialize relationships properly for more details:
     # https://github.com/fastapi/full-stack-fastapi-template/issues/28
-
-    # Change this to manually_import_models() if you don't want to use the automatic
-    # model loader.
     automatically_import_models()
 
     # Tables should be created with Alembic migrations
@@ -31,17 +36,4 @@ def init_db(session: Session) -> None:
     # the tables un-commenting the next lines
     # # ERA001 - Error from original template.
     # from sqlmodel import SQLModel # noqa: ERA001
-
-    # This works because the models are already imported and registered from app.schemas
-    # # ERA001 - Error from original template.
     # SQLModel.metadata.create_all(engine) # noqa: ERA001
-    user = session.exec(
-        select(User).where(User.email == settings.FIRST_SUPERUSER),
-    ).first()
-    if not user:
-        user_in = UserCreate(
-            email=settings.FIRST_SUPERUSER,
-            password=settings.FIRST_SUPERUSER_PASSWORD,
-            is_superuser=True,
-        )
-        user = user_service.create_user(session=session, user_create=user_in)

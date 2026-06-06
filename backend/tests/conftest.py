@@ -12,14 +12,9 @@ from sqlmodel import Session, SQLModel, create_engine, text
 # reportUnusedImport/F401 - This loads variables into the environment even if it looks
 # like it does nothing. It's easier to do this on import than import it then have a
 # function call in the middle of all of the imports.
-from app.auth.dependencies import get_db
 from app.config import settings
-from app.database import automatically_import_models, init_db
+from app.database import automatically_import_models, get_db, init_db
 from app.main import app
-from tests.users.utils import (
-    authentication_token_from_email,
-)
-from tests.utils.utils import get_superuser_token_headers
 
 
 def create_test_engine(db_suffix: str) -> Engine:
@@ -78,8 +73,7 @@ def savepoint_session(connection: Connection) -> Generator[Session]:
 def _init_connection() -> Generator[Connection]:
     """Create a connection and initialize the database."""
     connection = test_engine.connect()
-    with Session(bind=connection) as session:
-        init_db(session)
+    init_db()
     yield connection
     connection.close()
 
@@ -158,22 +152,3 @@ def module_scoped_client(module_scoped_db: Session) -> Generator[TestClient]:
 def session_scoped_client(session_scoped_db: Session) -> Generator[TestClient]:
     """Provide a test client using a session-scoped database session."""
     yield from _create_client(session_scoped_db)
-
-
-@pytest.fixture
-def superuser_token_headers(session_scoped_client: TestClient) -> dict[str, str]:
-    """Provide authentication headers for the superuser."""
-    return get_superuser_token_headers(session_scoped_client)
-
-
-@pytest.fixture
-def normal_user_token_headers(
-    session_scoped_client: TestClient,
-    session_scoped_db: Session,
-) -> dict[str, str]:
-    """Provide authentication headers for a normal test user."""
-    return authentication_token_from_email(
-        client=session_scoped_client,
-        email=settings.EMAIL_TEST_USER,
-        db=session_scoped_db,
-    )

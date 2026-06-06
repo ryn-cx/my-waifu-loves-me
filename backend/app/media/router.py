@@ -7,7 +7,7 @@ import httpx
 from fastapi import APIRouter, Header, HTTPException, status
 from sqlmodel import select
 
-from app.auth.dependencies import SessionDep
+from app.database import SessionDep
 from app.media.graphql_media_schema import Media
 from app.media.graphql_search_schema import SearchPage
 from app.media.graphql_user_schema import MediaListCollection
