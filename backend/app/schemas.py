@@ -1,6 +1,7 @@
 from sqlmodel import SQLModel
 
 
-# Generic message
 class Message(SQLModel):
+    """Generic message."""
+
     message: str

@@ -1183,6 +1183,9 @@ export type MediaTrendEdge = {
  */
 export type MediaType = 'ANIME' | 'MANGA';
 
+/**
+ * Generic message.
+ */
 export type Message = {
     message: string;
 };

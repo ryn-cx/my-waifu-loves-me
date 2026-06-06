@@ -11,8 +11,8 @@ from app.users.schemas import UserCreate
 engine = create_engine(str(settings.SQLALCHEMY_DATABASE_URI))
 
 
-def load_models() -> None:
-    """Dynamically load all of the database models."""
+def automatically_import_models() -> None:
+    """Dynamically import all of the database models."""
     for model_file in APP_PATH.glob("*/models.py"):
         import_module(f"app.{model_file.parent.name}.models")
 
@@ -21,8 +21,20 @@ def init_db(session: Session) -> None:
     # make sure all SQLModel models are imported before initializing DB otherwise,
     # SQLModel might fail to initialize relationships properly for more details:
     # https://github.com/fastapi/full-stack-fastapi-template/issues/28
-    load_models()
 
+    # Change this to manually_import_models() if you don't want to use the automatic
+    # model loader.
+    automatically_import_models()
+
+    # Tables should be created with Alembic migrations
+    # But if you don't want to use migrations, create
+    # the tables un-commenting the next lines
+    # # ERA001 - Error from original template.
+    # from sqlmodel import SQLModel # noqa: ERA001
+
+    # This works because the models are already imported and registered from app.schemas
+    # # ERA001 - Error from original template.
+    # SQLModel.metadata.create_all(engine) # noqa: ERA001
     user = session.exec(
         select(User).where(User.email == settings.FIRST_SUPERUSER),
     ).first()

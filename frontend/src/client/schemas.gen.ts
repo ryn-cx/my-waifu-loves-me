@@ -2718,7 +2718,8 @@ export const MessageSchema = {
     },
     type: 'object',
     required: ['message'],
-    title: 'Message'
+    title: 'Message',
+    description: 'Generic message.'
 } as const;
 
 export const ModRoleSchema = {

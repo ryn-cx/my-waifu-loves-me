@@ -1,6 +1,7 @@
 import uuid
+from typing import Annotated
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlmodel import col, delete, func, select
 
 from app.auth.dependencies import (
@@ -12,7 +13,7 @@ from app.auth.schemas import UpdatePassword
 from app.auth.security import get_password_hash, verify_password
 from app.config import settings
 from app.items.models import Item
-from app.models import Message
+from app.schemas import Message
 from app.users import service as user_service
 from app.users.models import User
 from app.users.schemas import (
@@ -29,11 +30,14 @@ router = APIRouter(prefix="/users", tags=["users"])
 
 
 @router.get("/", dependencies=[Depends(get_current_active_superuser)])
-def read_users(session: SessionDep, skip: int = 0, limit: int = 100) -> UsersPublic:
+def read_users(
+    session: SessionDep,
+    skip: Annotated[int, Query(ge=0)] = 0,
+    limit: Annotated[int, Query(ge=1)] = 100_000,
+) -> UsersPublic:
     """
     Retrieve users.
     """
-
     count_statement = select(func.count()).select_from(User)
     count = session.exec(count_statement).one()
 
@@ -42,8 +46,8 @@ def read_users(session: SessionDep, skip: int = 0, limit: int = 100) -> UsersPub
     )
     users = session.exec(statement).all()
 
-    # reportArgumentType - Arguements are automatically converted.
-    return UsersPublic(data=users, count=count)  # pyright: ignore[reportArgumentType]
+    users_public = [UserPublic.model_validate(user) for user in users]
+    return UsersPublic(data=users_public, count=count)
 
 
 @router.post(
@@ -87,7 +91,6 @@ def update_user_me(
     """
     Update own user.
     """
-
     if user_in.email:
         existing_user = user_service.get_user_by_email(
             session=session,
@@ -211,7 +214,6 @@ def update_user(
     """
     Update a user.
     """
-
     db_user = session.get(User, user_id)
     if not db_user:
         raise HTTPException(
