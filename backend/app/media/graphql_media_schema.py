@@ -1775,8 +1775,8 @@ class MediaEdge(BaseModel):
         description="The order the media should be displayed from the users favourites",
     )
     id: Int | None = Field(None, description="The id of the connection")
-    is_main_studio: Boolean = Field(
-        ...,
+    is_main_studio: Boolean | None = Field(
+        None,
         alias="isMainStudio",
         description="If the studio is the main animation studio of the media (For Studio->MediaConnection field only)",
     )

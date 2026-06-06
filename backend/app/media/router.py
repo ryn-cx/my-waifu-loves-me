@@ -1,5 +1,7 @@
 import json
 import logging
+import threading
+import time
 from datetime import timedelta
 from typing import Annotated, Any
 
@@ -23,6 +25,89 @@ logger = logging.getLogger(__name__)
 AnilistToken = Annotated[str | None, Header(alias="X-Anilist-Token")]
 
 
+ANILIST_URL = "https://graphql.anilist.co"
+
+_DEFAULT_RATE_LIMIT_PER_MINUTE = 30
+_MAX_RATE_LIMIT_RETRIES = 3
+_RATE_LIMIT_FALLBACK_COOLDOWN = 60.0
+
+
+class _RateLimiter:
+    """Spaces and backs off AniList requests to respect the API rate limit.
+
+    A single shared instance is used by every request so concurrent callers are
+    throttled together rather than each tracking their own budget.
+    """
+
+    def __init__(self, requests_per_minute: int) -> None:
+        self._lock = threading.Lock()
+        # Minimum seconds between consecutive requests.
+        self._min_interval = 60.0 / requests_per_minute
+        # Earliest monotonic-clock time at which the next request may be sent.
+        self._next_request_at = 0.0
+
+    def reserve_slot(self) -> None:
+        """Block until the caller is allowed to issue the next request.
+
+        Spaces requests by the observed rate limit so concurrent callers (e.g. a
+        relations traversal fetching many media at once) don't burst past the
+        cap.
+        """
+        with self._lock:
+            start_at = max(time.monotonic(), self._next_request_at)
+            self._next_request_at = start_at + self._min_interval
+
+        delay = start_at - time.monotonic()
+        if delay > 0:
+            time.sleep(delay)
+
+    def apply_cooldown(self, seconds: float) -> None:
+        """Delay all subsequent requests by ``seconds`` (a hard backoff)."""
+        if seconds <= 0:
+            return
+        with self._lock:
+            self._next_request_at = max(
+                self._next_request_at,
+                time.monotonic() + seconds,
+            )
+
+    def learn_limit(self, headers: httpx.Headers) -> None:
+        """Tighten request spacing from the X-RateLimit-Limit header."""
+        raw_limit = headers.get("X-RateLimit-Limit")
+        if raw_limit is None:
+            return
+        try:
+            limit = int(raw_limit)
+        except ValueError:
+            return
+        if limit <= 0:
+            return
+        with self._lock:
+            self._min_interval = 60.0 / limit
+
+
+_rate_limiter = _RateLimiter(_DEFAULT_RATE_LIMIT_PER_MINUTE)
+
+
+def _retry_after_seconds(headers: httpx.Headers) -> float:
+    """How long to wait after a 429, from Retry-After or X-RateLimit-Reset."""
+    raw_retry_after = headers.get("Retry-After")
+    if raw_retry_after is not None:
+        try:
+            return max(0.0, float(raw_retry_after))
+        except ValueError:
+            pass
+
+    raw_reset = headers.get("X-RateLimit-Reset")
+    if raw_reset is not None:
+        try:
+            return max(0.0, float(raw_reset) - time.time())
+        except ValueError:
+            pass
+
+    return _RATE_LIMIT_FALLBACK_COOLDOWN
+
+
 def graphql_request(
     query: str,
     variables: dict[str, int | str],
@@ -32,27 +117,48 @@ def graphql_request(
     if access_token:
         headers["Authorization"] = f"Bearer {access_token}"
 
-    response = httpx.post(
-        "https://graphql.anilist.co",
-        headers=headers,
-        json={
-            "query": query,
-            "variables": variables,
-        },
-        timeout=60,
-    )
+    payload = {"query": query, "variables": variables}
 
-    if response.status_code != 200:  # noqa: PLR2004
-        msg = f"Unexpected response status code: {response.status_code}"
-        raise ValueError(msg)
+    for attempt in range(_MAX_RATE_LIMIT_RETRIES + 1):
+        _rate_limiter.reserve_slot()
 
-    output = response.json()
+        response = httpx.post(ANILIST_URL, headers=headers, json=payload, timeout=60)
+        _rate_limiter.learn_limit(response.headers)
 
-    if output.get("errors"):
-        msg = f"GraphQL errors occurred: {output['errors']}"
-        raise ValueError(msg)
+        if response.status_code == status.HTTP_429_TOO_MANY_REQUESTS:
+            cooldown = _retry_after_seconds(response.headers)
+            _rate_limiter.apply_cooldown(cooldown)
+            logger.warning(
+                "AniList rate limit hit (attempt %d/%d); waiting %.1fs before retry",
+                attempt + 1,
+                _MAX_RATE_LIMIT_RETRIES + 1,
+                cooldown,
+            )
+            continue
 
-    return output
+        if response.status_code != status.HTTP_200_OK:
+            msg = f"Unexpected response status code: {response.status_code}"
+            raise ValueError(msg)
+
+        # If the window is drained, hold off the next request until it resets so
+        # we don't deliberately walk into a 429.
+        raw_remaining = response.headers.get("X-RateLimit-Remaining")
+        raw_reset = response.headers.get("X-RateLimit-Reset")
+        if raw_remaining is not None and raw_reset is not None:
+            try:
+                if int(raw_remaining) <= 0:
+                    _rate_limiter.apply_cooldown(float(raw_reset) - time.time())
+            except ValueError:
+                pass
+
+        output = response.json()
+        if output.get("errors"):
+            msg = f"GraphQL errors occurred: {output['errors']}"
+            raise ValueError(msg)
+        return output
+
+    msg = f"AniList rate limit exceeded after {_MAX_RATE_LIMIT_RETRIES + 1} attempts"
+    raise ValueError(msg)
 
 
 MAX_CACHE_AGE = timedelta(days=30)
@@ -91,6 +197,7 @@ def read_media(
         if media_file:
             media_file.content = json.dumps(graphql_data["data"]["Media"])
             media_file.data_timestamp = tz_datetime.now()
+            reason = "refresh"
         else:
             media_file = MediaFile(
                 id=media_id,
@@ -98,8 +205,10 @@ def read_media(
                 data_timestamp=tz_datetime.now(),
             )
             session.add(media_file)
+            reason = "new"
         session.commit()
         session.refresh(media_file)
+        logger.info("Downloaded media %s from AniList (%s)", media_id, reason)
 
     return Media.model_validate_json(media_file.content)
 
@@ -157,6 +266,7 @@ def read_user(
         if user_file:
             user_file.content = combined_data.model_dump_json(by_alias=True)
             user_file.data_timestamp = tz_datetime.now()
+            reason = "refresh"
         else:
             user_file = UserFile(
                 id=user_name.lower(),
@@ -164,8 +274,10 @@ def read_user(
                 data_timestamp=tz_datetime.now(),
             )
             session.add(user_file)
+            reason = "new"
         session.commit()
         session.refresh(user_file)
+        logger.info("Downloaded user list %r from AniList (%s)", user_name, reason)
 
     return MediaListCollection.model_validate_json(user_file.content)
 
@@ -202,6 +314,7 @@ def search_media(
         if search_file:
             search_file.content = json.dumps(graphql_data["data"]["Page"])
             search_file.data_timestamp = tz_datetime.now()
+            reason = "refresh"
         else:
             search_file = SearchFile(
                 search_query=cache_key,
@@ -209,7 +322,14 @@ def search_media(
                 data_timestamp=tz_datetime.now(),
             )
             session.add(search_file)
+            reason = "new"
         session.commit()
         session.refresh(search_file)
+        logger.info(
+            "Downloaded search results for %r [%s] from AniList (%s)",
+            search_query,
+            media_type,
+            reason,
+        )
 
     return SearchPage.model_validate_json(search_file.content)

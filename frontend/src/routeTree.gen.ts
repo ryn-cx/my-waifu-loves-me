@@ -11,6 +11,8 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as LayoutRouteImport } from './routes/_layout'
 import { Route as LayoutIndexRouteImport } from './routes/_layout/index'
+import { Route as LayoutRelationsRouteImport } from './routes/_layout/relations'
+import { Route as LayoutMissingRouteImport } from './routes/_layout/missing'
 
 const LayoutRoute = LayoutRouteImport.update({
   id: '/_layout',
@@ -21,24 +23,45 @@ const LayoutIndexRoute = LayoutIndexRouteImport.update({
   path: '/',
   getParentRoute: () => LayoutRoute,
 } as any)
+const LayoutRelationsRoute = LayoutRelationsRouteImport.update({
+  id: '/relations',
+  path: '/relations',
+  getParentRoute: () => LayoutRoute,
+} as any)
+const LayoutMissingRoute = LayoutMissingRouteImport.update({
+  id: '/missing',
+  path: '/missing',
+  getParentRoute: () => LayoutRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof LayoutIndexRoute
+  '/missing': typeof LayoutMissingRoute
+  '/relations': typeof LayoutRelationsRoute
 }
 export interface FileRoutesByTo {
+  '/missing': typeof LayoutMissingRoute
+  '/relations': typeof LayoutRelationsRoute
   '/': typeof LayoutIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/_layout': typeof LayoutRouteWithChildren
+  '/_layout/missing': typeof LayoutMissingRoute
+  '/_layout/relations': typeof LayoutRelationsRoute
   '/_layout/': typeof LayoutIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths: '/' | '/missing' | '/relations'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/_layout' | '/_layout/'
+  to: '/missing' | '/relations' | '/'
+  id:
+    | '__root__'
+    | '/_layout'
+    | '/_layout/missing'
+    | '/_layout/relations'
+    | '/_layout/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -61,14 +84,32 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LayoutIndexRouteImport
       parentRoute: typeof LayoutRoute
     }
+    '/_layout/relations': {
+      id: '/_layout/relations'
+      path: '/relations'
+      fullPath: '/relations'
+      preLoaderRoute: typeof LayoutRelationsRouteImport
+      parentRoute: typeof LayoutRoute
+    }
+    '/_layout/missing': {
+      id: '/_layout/missing'
+      path: '/missing'
+      fullPath: '/missing'
+      preLoaderRoute: typeof LayoutMissingRouteImport
+      parentRoute: typeof LayoutRoute
+    }
   }
 }
 
 interface LayoutRouteChildren {
+  LayoutMissingRoute: typeof LayoutMissingRoute
+  LayoutRelationsRoute: typeof LayoutRelationsRoute
   LayoutIndexRoute: typeof LayoutIndexRoute
 }
 
 const LayoutRouteChildren: LayoutRouteChildren = {
+  LayoutMissingRoute: LayoutMissingRoute,
+  LayoutRelationsRoute: LayoutRelationsRoute,
   LayoutIndexRoute: LayoutIndexRoute,
 }
 

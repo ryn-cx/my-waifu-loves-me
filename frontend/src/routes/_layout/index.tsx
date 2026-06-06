@@ -1,44 +1,15 @@
-import { useMutation, useQueries, useQuery } from "@tanstack/react-query"
+import { useMutation } from "@tanstack/react-query"
 import { createFileRoute, useNavigate } from "@tanstack/react-router"
-import { useCallback, useEffect, useMemo } from "react"
+import { useCallback, useEffect } from "react"
 import { toast } from "sonner"
-import {
-  type app__media__graphql_media_schema__Media,
-  type MediaListCollection,
-  type MediaListStatus,
-  MediaService,
-} from "@/client"
+import { type MediaListStatus, MediaService } from "@/client"
 import { MediaGraph } from "@/components/Media/MediaGraph"
-
-const parseStringArray = (value: unknown): string[] | undefined => {
-  if (typeof value === "string") {
-    const arr = value.split(",").filter(Boolean)
-    return arr.length > 0 ? arr : undefined
-  }
-  if (Array.isArray(value)) {
-    const arr = value.filter(Boolean).map(String)
-    return arr.length > 0 ? arr : undefined
-  }
-  return undefined
-}
-
-const parseBoolean = (value: unknown): boolean | undefined => {
-  if (value === "true" || value === true) {
-    return true
-  }
-  return undefined
-}
-
-const parsePositiveNumber = (value: unknown): number | undefined => {
-  if (typeof value === "string") {
-    const parsed = parseInt(value, 10)
-    return !Number.isNaN(parsed) && parsed > 0 ? parsed : undefined
-  }
-  if (typeof value === "number" && value > 0) {
-    return value
-  }
-  return undefined
-}
+import { useMediaGraphData } from "@/hooks/useMediaGraphData"
+import {
+  parseBoolean,
+  parsePositiveNumber,
+  parseStringArray,
+} from "@/lib/searchParams"
 
 type MediaSearch = {
   ids?: string[]
@@ -93,47 +64,8 @@ function MediaPage() {
     maxStartYear,
   } = Route.useSearch()
 
-  const numericIds = useMemo(
-    () => ids.map((id) => parseInt(id, 10)).filter((id) => !Number.isNaN(id)),
-    [ids],
-  )
-
-  const mediaQueries = useQueries({
-    queries: numericIds.map((id) => ({
-      queryKey: ["media", id],
-      queryFn: () => MediaService.readMedia({ mediaId: id }),
-      staleTime: 1000 * 60 * 5,
-      retry: false,
-    })),
-  })
-
-  const { data: userList, isError: isUserListError } = useQuery<
-    MediaListCollection | null,
-    Error
-  >({
-    queryKey: ["userList", user],
-    queryFn: () =>
-      user ? MediaService.readUser({ userName: user }) : Promise.resolve(null),
-    enabled: !!user,
-    staleTime: 1000 * 60 * 5,
-    retry: false,
-  })
-
-  const mediaItems = useMemo(
-    () =>
-      mediaQueries
-        .map((query) => query.data)
-        .filter(
-          (data): data is app__media__graphql_media_schema__Media =>
-            data !== undefined,
-        ),
-    [mediaQueries],
-  )
-
-  const loadedIds = useMemo(
-    () => new Set(mediaItems.map((item) => item.id)),
-    [mediaItems],
-  )
+  const { mediaItems, userList, isUserListError, loadedIds } =
+    useMediaGraphData(ids, user)
 
   const updateUrl = useCallback(
     (params: {

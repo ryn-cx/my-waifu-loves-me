@@ -1,16 +1,21 @@
 import Graph from "graphology"
 import forceAtlas2 from "graphology-layout-forceatlas2"
-import { useEffect, useMemo, useRef, useState } from "react"
-import { createPortal } from "react-dom"
+import { useEffect, useMemo, useRef } from "react"
 import Sigma from "sigma"
 import type {
   app__media__graphql_media_schema__Media,
   MediaListCollection,
   MediaListStatus,
 } from "@/client"
+import {
+  CHOSEN_NODE_COLOR_DARK,
+  CHOSEN_NODE_COLOR_LIGHT,
+  getMediaStatusMap,
+  STATUS_COLORS,
+  withAlpha,
+} from "@/components/Media/mediaGraphShared"
+import { useGraphTooltips } from "@/components/Media/useGraphTooltips"
 import { useTheme } from "@/components/theme-provider"
-import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
 
 interface MediaGraphProps {
   mediaItems: app__media__graphql_media_schema__Media[]
@@ -28,29 +33,12 @@ interface MediaGraphProps {
   maxStartYear?: number
 }
 
-const STATUS_COLORS: Record<MediaListStatus, string> = {
-  COMPLETED: "#48bb78",
-  CURRENT: "#4299e1",
-  DROPPED: "#f56565",
-  PAUSED: "#ed8936",
-  PLANNING: "#9f7aea",
-  REPEATING: "#38b2ac",
-}
-const CHOSEN_NODE_COLOR_LIGHT = "#000000"
-const CHOSEN_NODE_COLOR_DARK = "#ffffff"
 const NEW_NODE_COLOR_LIGHT = "#aaaaaa"
 const NEW_NODE_COLOR_DARK = "#6b7280"
 const EDGE_COLOR_LIGHT = "#cbd5e0"
 const EDGE_COLOR_DARK = "#4b5563"
 
 const DARK_EDGE_ALPHA = 0.45
-
-function withAlpha(hex: string, alpha: number) {
-  const r = parseInt(hex.slice(1, 3), 16) || 0
-  const g = parseInt(hex.slice(3, 5), 16) || 0
-  const b = parseInt(hex.slice(5, 7), 16) || 0
-  return `rgba(${r}, ${g}, ${b}, ${alpha})`
-}
 
 function getEdgeScaleFactor(
   mediaItems: app__media__graphql_media_schema__Media[],
@@ -96,20 +84,6 @@ function calculateEdgeSize(
     )
   }
   return Math.max(1, rating * edgeScaleFactor)
-}
-
-function getMediaStatusMap(userList: MediaListCollection | null) {
-  const mediaStatusMap = new Map<number, MediaListStatus>()
-  if (userList?.lists) {
-    for (const listGroup of userList.lists) {
-      if (!listGroup?.entries || !listGroup.status) continue
-      for (const entry of listGroup.entries) {
-        if (!entry?.mediaId) continue
-        mediaStatusMap.set(entry.mediaId, listGroup.status)
-      }
-    }
-  }
-  return mediaStatusMap
 }
 
 function applyMinimumConnectionsFilter(
@@ -307,18 +281,8 @@ export function MediaGraph({
   const containerRef = useRef<HTMLDivElement>(null)
   const sigmaRef = useRef<Sigma | null>(null)
   const { resolvedTheme } = useTheme()
-  const [hoveredMedia, setHoveredMedia] =
-    useState<app__media__graphql_media_schema__Media | null>(null)
-  const [pinnedMediaList, setPinnedMediaList] = useState<
-    Array<{
-      media: app__media__graphql_media_schema__Media
-      position: { x: number; y: number }
-    }>
-  >([])
-  const [tooltipPosition, setTooltipPosition] = useState({ x: 0, y: 0 })
-  const hoveredRef = useRef<app__media__graphql_media_schema__Media | null>(
-    null,
-  )
+  const { showHover, hideHover, moveHover, togglePin, portal } =
+    useGraphTooltips({ loadedIds, onAddMedia, onRemoveMedia })
 
   const mediaStatusMap = useMemo(() => getMediaStatusMap(userList), [userList])
 
@@ -444,43 +408,22 @@ export function MediaGraph({
     }
 
     const handleEnter = ({ node, event }: any) => {
-      const nodeId = parseInt(node, 10)
-      const media = getMediaFromNode(nodeId)
-      if (media) {
-        setHoveredMedia(media)
-        hoveredRef.current = media
-        setTooltipPosition({ x: event.x, y: event.y })
-      }
+      const media = getMediaFromNode(parseInt(node, 10))
+      if (media) showHover(media, { x: event.x, y: event.y })
     }
     sigma.on("enterNode", handleEnter)
 
-    const handleLeave = () => {
-      setHoveredMedia(null)
-      hoveredRef.current = null
-    }
+    const handleLeave = () => hideHover()
     sigma.on("leaveNode", handleLeave)
 
     const handleClick = ({ node, event }: any) => {
-      const nodeId = parseInt(node, 10)
-      const media = getMediaFromNode(nodeId)
-      if (media) {
-        setPinnedMediaList((prev) => {
-          const exists = prev.find((p) => p.media.id === media.id)
-          if (exists) {
-            return prev.filter((p) => p.media.id !== media.id)
-          }
-          return [...prev, { media, position: { x: event.x, y: event.y } }]
-        })
-      }
+      const media = getMediaFromNode(parseInt(node, 10))
+      if (media) togglePin(media, { x: event.x, y: event.y })
     }
     sigma.on("clickNode", handleClick)
 
     const mouseCaptor = sigma.getMouseCaptor()
-    const handleMove = (event: any) => {
-      if (hoveredRef.current) {
-        setTooltipPosition({ x: event.x, y: event.y })
-      }
-    }
+    const handleMove = (event: any) => moveHover({ x: event.x, y: event.y })
     mouseCaptor.on("mousemove", handleMove)
 
     sigmaRef.current = sigma
@@ -504,187 +447,16 @@ export function MediaGraph({
     minStartYear,
     maxStartYear,
     resolvedTheme,
+    showHover,
+    hideHover,
+    moveHover,
+    togglePin,
   ])
-
-  const renderTooltip = (
-    media: app__media__graphql_media_schema__Media,
-    position: { x: number; y: number },
-    isPinned: boolean,
-  ) => {
-    const tooltipWidth = 350
-    const tooltipHeight = 400
-    const offset = 20
-
-    let left = position.x + offset
-    let top = position.y + offset
-
-    if (left + tooltipWidth > window.innerWidth) {
-      left = position.x - tooltipWidth - offset
-    }
-
-    if (top + tooltipHeight > window.innerHeight) {
-      top = position.y - tooltipHeight - offset
-    }
-
-    if (left < 0) {
-      left = offset
-    }
-
-    if (top < 0) {
-      top = offset
-    }
-
-    return (
-      <div
-        className={`fixed z-[9999] max-w-[350px] rounded-md border bg-background p-3 shadow-lg ${
-          isPinned
-            ? "border-blue-400 pointer-events-auto"
-            : "border-border pointer-events-none"
-        }`}
-        style={{ left: `${left}px`, top: `${top}px` }}
-        onClick={(e) => e.stopPropagation()}
-      >
-        <div className="flex flex-col gap-2">
-          {isPinned && (
-            <div className="flex justify-end">
-              <span
-                className="cursor-pointer text-xs text-muted-foreground hover:text-destructive"
-                onClick={() =>
-                  setPinnedMediaList((prev) =>
-                    prev.filter((p) => p.media.id !== media.id),
-                  )
-                }
-              >
-                Close
-              </span>
-            </div>
-          )}
-          <div className="flex gap-3">
-            {media.coverImage?.medium && (
-              <img
-                src={media.coverImage.medium}
-                alt={media.title?.romaji || "Cover"}
-                className="h-[120px] w-[80px] rounded-md object-cover"
-              />
-            )}
-            <div className="flex flex-1 flex-col gap-1">
-              <p className="line-clamp-2 text-sm font-bold">
-                {media.title?.romaji || media.title?.english}
-              </p>
-              {media.averageScore && (
-                <p className="text-sm font-bold text-blue-600">
-                  {media.averageScore}%
-                </p>
-              )}
-              {media.format && (
-                <p className="text-xs text-muted-foreground">{media.format}</p>
-              )}
-              {media.episodes && (
-                <p className="text-xs text-muted-foreground">
-                  {media.episodes} episodes
-                </p>
-              )}
-            </div>
-          </div>
-
-          {media.genres && media.genres.length > 0 && (
-            <div className="flex flex-wrap gap-1">
-              {media.genres.slice(0, 4).map(
-                (genre, idx) =>
-                  genre && (
-                    <Badge key={idx} variant="secondary" className="text-xs">
-                      {genre}
-                    </Badge>
-                  ),
-              )}
-            </div>
-          )}
-
-          {media.description && (
-            <p className="line-clamp-[10] text-xs text-muted-foreground">
-              {media.description.replace(/<[^>]*>/g, "")}
-            </p>
-          )}
-
-          {isPinned && (
-            <>
-              <div className="flex gap-2 border-t pt-1">
-                {media.siteUrl && (
-                  <a
-                    href={media.siteUrl}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="text-xs text-blue-500 hover:underline"
-                  >
-                    AniList
-                  </a>
-                )}
-                {media.idMal && (
-                  <a
-                    href={`https://myanimelist.net/anime/${media.idMal}`}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="text-xs text-blue-500 hover:underline"
-                  >
-                    MAL
-                  </a>
-                )}
-              </div>
-              <div className="flex gap-2 pt-2">
-                {loadedIds.has(media.id) ? (
-                  <Button
-                    size="sm"
-                    variant="destructive"
-                    onClick={() => {
-                      onRemoveMedia?.(media.id)
-                      setPinnedMediaList((prev) =>
-                        prev.filter((p) => p.media.id !== media.id),
-                      )
-                    }}
-                    className="w-full"
-                  >
-                    Remove from Graph
-                  </Button>
-                ) : (
-                  <Button
-                    size="sm"
-                    onClick={() => {
-                      onAddMedia?.(media.id)
-                      setPinnedMediaList((prev) =>
-                        prev.filter((p) => p.media.id !== media.id),
-                      )
-                    }}
-                    className="w-full"
-                  >
-                    Add to Graph
-                  </Button>
-                )}
-              </div>
-            </>
-          )}
-        </div>
-      </div>
-    )
-  }
 
   return (
     <div className="relative h-full">
       <div ref={containerRef} className="h-full w-full rounded-md border" />
-
-      {createPortal(
-        <>
-          {hoveredMedia &&
-            !pinnedMediaList.find((p) => p.media.id === hoveredMedia.id) &&
-            renderTooltip(hoveredMedia, tooltipPosition, false)}
-
-          {pinnedMediaList.map((pinned) => (
-            <div key={pinned.media.id}>
-              {renderTooltip(pinned.media, pinned.position, true)}
-            </div>
-          ))}
-        </>,
-        document.body,
-      )}
+      {portal}
     </div>
   )
 }

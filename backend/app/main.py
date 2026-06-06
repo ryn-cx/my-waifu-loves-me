@@ -1,3 +1,4 @@
+import logging
 from importlib import import_module
 
 import sentry_sdk
@@ -7,6 +8,8 @@ from starlette.middleware.cors import CORSMiddleware
 
 from app.config import settings
 from app.constants import APP_PATH
+
+logging.basicConfig(level=logging.INFO)
 
 
 def custom_generate_unique_id(route: APIRoute) -> str:
@@ -41,7 +44,6 @@ def automatically_import_routers() -> APIRouter:
         api_router.include_router(router)
 
     return api_router
-
 
 
 # Change this to manually_import_routers() if you don't want to use the automatic router

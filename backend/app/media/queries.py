@@ -10,6 +10,14 @@ MEDIA_QUERY = """query($mediaId: Int) {
         rating
       }
     }
+    relations {
+      edges {
+        relationType
+        node {
+          ...MediaFields
+        }
+      }
+    }
   }
 }
 
