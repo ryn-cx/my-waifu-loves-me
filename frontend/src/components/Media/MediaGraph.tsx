@@ -36,8 +36,21 @@ const STATUS_COLORS: Record<MediaListStatus, string> = {
   PLANNING: "#9f7aea",
   REPEATING: "#38b2ac",
 }
-const CHOSEN_NODE_COLOR = "#000000"
-const NEW_NODE_COLOR = "#aaaaaa"
+const CHOSEN_NODE_COLOR_LIGHT = "#000000"
+const CHOSEN_NODE_COLOR_DARK = "#ffffff"
+const NEW_NODE_COLOR_LIGHT = "#aaaaaa"
+const NEW_NODE_COLOR_DARK = "#6b7280"
+const EDGE_COLOR_LIGHT = "#cbd5e0"
+const EDGE_COLOR_DARK = "#4b5563"
+
+const DARK_EDGE_ALPHA = 0.45
+
+function withAlpha(hex: string, alpha: number) {
+  const r = parseInt(hex.slice(1, 3), 16) || 0
+  const g = parseInt(hex.slice(3, 5), 16) || 0
+  const b = parseInt(hex.slice(5, 7), 16) || 0
+  return `rgba(${r}, ${g}, ${b}, ${alpha})`
+}
 
 function getEdgeScaleFactor(
   mediaItems: app__media__graphql_media_schema__Media[],
@@ -127,6 +140,7 @@ function addMediaToGraph(
   graph: Graph,
   mediaId: string,
   media: app__media__graphql_media_schema__Media,
+  chosenNodeColor: string,
 ) {
   if (!graph.hasNode(mediaId)) {
     graph.addNode(mediaId, {
@@ -136,7 +150,7 @@ function addMediaToGraph(
       label: media.title?.romaji || media.title?.english || `Media ${media.id}`,
       originalLabel:
         media.title?.romaji || media.title?.english || `Media ${media.id}`,
-      color: CHOSEN_NODE_COLOR,
+      color: chosenNodeColor,
     })
   }
 }
@@ -189,6 +203,7 @@ function addRecommendationsToGraph(
   statusFilter: Set<MediaListStatus>,
   hideNotOnList: boolean,
   colorEdgesByTag: boolean,
+  isDarkMode: boolean,
   minStartYear?: number,
   maxStartYear?: number,
 ) {
@@ -218,7 +233,8 @@ function addRecommendationsToGraph(
       }
     }
 
-    const recNodeColor = recStatus ? STATUS_COLORS[recStatus] : NEW_NODE_COLOR
+    const newNodeColor = isDarkMode ? NEW_NODE_COLOR_DARK : NEW_NODE_COLOR_LIGHT
+    const recNodeColor = recStatus ? STATUS_COLORS[recStatus] : newNodeColor
     const rating = rec.rating || 0
     const users = recMedia.popularity || 1
 
@@ -257,14 +273,15 @@ function addRecommendationsToGraph(
 
       if (colorEdgesByTag) {
         const bestTag = getBestTag(media, recMedia)
+        const tagColor = generateColor(bestTag)
         graph.addEdge(mediaId, recId, {
-          color: generateColor(bestTag),
+          color: isDarkMode ? withAlpha(tagColor, DARK_EDGE_ALPHA) : tagColor,
           size: edgeSize,
           label: bestTag,
         })
       } else {
         graph.addEdge(mediaId, recId, {
-          color: "#cbd5e0",
+          color: isDarkMode ? EDGE_COLOR_DARK : EDGE_COLOR_LIGHT,
           size: edgeSize,
         })
       }
@@ -317,9 +334,14 @@ export function MediaGraph({
       usePopularityCompensation,
     )
 
+    const isDarkMode = resolvedTheme === "dark"
+    const chosenNodeColor = isDarkMode
+      ? CHOSEN_NODE_COLOR_DARK
+      : CHOSEN_NODE_COLOR_LIGHT
+
     mediaItems.forEach((media) => {
       const mediaId = String(media.id)
-      addMediaToGraph(graph, mediaId, media)
+      addMediaToGraph(graph, mediaId, media, chosenNodeColor)
     })
 
     mediaItems.forEach((media) => {
@@ -336,6 +358,7 @@ export function MediaGraph({
         statusFilter,
         hideNotOnList,
         colorEdgesByTag,
+        isDarkMode,
         minStartYear,
         maxStartYear,
       )
@@ -398,8 +421,6 @@ export function MediaGraph({
         adjustSizes: true,
       },
     })
-
-    const isDarkMode = resolvedTheme === "dark"
 
     const sigma = new Sigma(graph, containerRef.current, {
       renderEdgeLabels: true,
