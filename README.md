@@ -1,6 +1,6 @@
 # My Waifu Loves Me
 
-An anime and manga recommendation explorer that visualizes relationships between media as an interactive graph. Search for anime or manga, load their recommendations from [AniList](https://anilist.co), and explore connections visually using a force-directed graph.
+Anime and manga recommendation explorer that visualizes relationships between media as an interactive graph. Search for anime or manga, load their recommendations from [AniList](https://anilist.co), and explore connections visually using a force-directed graph.
 
 ## Features
 
